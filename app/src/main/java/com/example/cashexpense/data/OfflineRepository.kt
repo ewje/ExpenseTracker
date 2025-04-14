@@ -28,6 +28,8 @@ class OfflineRepository(
     override fun getTransactionsWithAccountAndCategoryByAccount(id: Int): Flow<List<TransactionsWithAccountAndCategory>> =
         transactionDao.getTransactionsWithAccountAndCategoryByAccount(id)
 
+    override fun getTransactionWithAccountAndCategory(id: Int): Flow<TransactionsWithAccountAndCategory> =
+        transactionDao.getTransactionWithAccountAndCategory(id)
 
     override suspend fun insertCategory(category: Category){
         categoryDao.insertCategory(category)

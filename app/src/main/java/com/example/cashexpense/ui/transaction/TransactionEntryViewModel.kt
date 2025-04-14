@@ -14,8 +14,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
-import java.math.RoundingMode
 
 class TransactionEntryViewModel(
         private val repository: AppRepository
@@ -42,7 +40,7 @@ class TransactionEntryViewModel(
     fun saveTransaction() {
         if (validateInput()) {
             viewModelScope.launch {
-                repository.insertTransaction(transactionUiState.transactionDetails.toTransaction(categoriesState, accountsState))
+                repository.insertTransaction(transactionUiState.transactionDetails.toTransaction())
                 editAccountValue()
             }
         }
@@ -50,7 +48,7 @@ class TransactionEntryViewModel(
 
     private fun validateInput(uiState: TransactionDetails = transactionUiState.transactionDetails): Boolean {
         return with(uiState) {
-            title.isNotBlank() && (amount.removeRange(0, 1).toDoubleOrNull() != null) && account.isNotBlank() && category.isNotBlank()
+            title.isNotBlank() && (amount.isNotBlank()) && account.isNotBlank() && category.isNotBlank()
         }
     }
 
@@ -92,56 +90,86 @@ data class TransactionUiState(
 )
 
 data class TransactionDetails(
+    val id: Int = 0,
     val title: String = "",
     val amount: String = "",
     val date: Long = System.currentTimeMillis(),
     val details: String = "",
     val type: TransactionType = TransactionType.EXPENSE,
     val category: String = "",
-    val account: String = ""
+    val account: String = "",
+    val categoryId: Int = 0,
+    val accountId: Int = 0
 )
 
-enum class TransactionType {
-    INCOME,
-    EXPENSE,
-    TRANSFER
+data class AccountDetails(
+    val id: Int = 0,
+    val accountName: String = "",
+    val color: Long = 0,
+    val income: String = "",
+    val expense: String = "",
+    val amount: String = ""
+)
+
+data class CategoryDetails(
+    val categoryName: String = "",
+    val color: Long = 0
+)
+
+enum class TransactionType(val label: String) {
+    INCOME("Income"),
+    EXPENSE("Expense"),
+    TRANSFER("Transfer")
 }
 
 fun Transaction.toTransactionDetails(): TransactionDetails = TransactionDetails(
+    id = id,
     title = title,
     amount = transAmount.toString(),
     date = date,
     details = details,
-    type = type
+    type = type,
+    categoryId = categoryIdFk,
+    accountId = accountIdFk
 )
 
-private fun TransactionDetails.toTransaction(
-    categoriesState: StateFlow<List<Category>>,
-    accountsState: StateFlow<List<Account>>
-): Transaction {
-    val categoryIdFk: Int
-    val accountIdFk: Int
+fun Account.toAccountDetails(): AccountDetails = AccountDetails(
+    id = id,
+    accountName = accountName,
+    color = accountColor,
+    amount = accAmount.toString(),
+    expense = expense.toString(),
+    income = income.toString()
+)
 
-    // Collect data from StateFlows
-    val categories = categoriesState.value
-    val accounts = accountsState.value
+fun AccountDetails.toAccount(): Account = Account(
+    id = id,
+    accountName = accountName,
+    accountColor = color,
+    accAmount = amount.toDoubleWithTwoDecimalPlaces(),
+    income = income.toDoubleWithTwoDecimalPlaces(),
+    expense = expense.toDoubleWithTwoDecimalPlaces()
+)
 
-    // Perform find on lists
-    categoryIdFk = categories.find { it.categoryName.trim() == category.trim() }?.id ?: 0
-    accountIdFk = accounts.find { it.accountName.trim() == account.trim() }?.id ?: 0
+fun Category.toCategoryDetails(): CategoryDetails = CategoryDetails(
+    categoryName = categoryName,
+    color = color
+)
 
+fun TransactionDetails.toTransaction(): Transaction {
     return Transaction(
+        id = id,
         title = title,
         transAmount = amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces(),
         date = date,
         details = details,
         type = type,
-        accountIdFk = accountIdFk,
-        categoryIdFk = categoryIdFk
+        accountIdFk = accountId,
+        categoryIdFk = categoryId
     )
 }
 
-private fun String.toDoubleWithTwoDecimalPlaces(): Double {
+fun String.toDoubleWithTwoDecimalPlaces(): Double {
     return try {
         val formatted = "%.2f".format(this.toDouble())
         formatted.toDouble()

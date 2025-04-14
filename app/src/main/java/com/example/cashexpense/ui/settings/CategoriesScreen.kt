@@ -47,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cashexpense.NavDestination
 import com.example.cashexpense.R
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.ui.AppViewModelProvider
@@ -63,32 +64,20 @@ fun CategoriesScreen(
     viewModel: CategoriesScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val categories by viewModel.categoriesState.collectAsState()
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                    text = "Categories",
-                    style = MaterialTheme.typography.headlineLarge
-                    )
-                }
-            )
+    CategoriesBody(
+        modifier = Modifier,
+        categoryUiState = viewModel.categoryUiState,
+        onCategoryDetailsChange = viewModel::updateUiState,
+        onSaveClick = {
+            viewModel.saveCategory()
+        },
+        categories = categories,
+        isButtonEnabled = viewModel.isButtonEnabled(),
+        deleteCategory = {category ->
+            viewModel.deleteCategory(category)
         }
-    ) { innerPadding ->
-        CategoriesBody(
-            modifier = Modifier.padding(innerPadding),
-            categoryUiState = viewModel.categoryUiState,
-            onCategoryDetailsChange = viewModel::updateUiState,
-            onSaveClick = {
-                viewModel.saveCategory()
-            },
-            categories = categories,
-            isButtonEnabled = viewModel.isButtonEnabled(),
-            deleteCategory = {category ->
-                viewModel.deleteCategory(category)
-            }
-        )
-    }
+    )
+
 }
 
 @Composable
@@ -265,12 +254,16 @@ fun ColorPicker(
     }
 }
 
+object CategoriesDestination: NavDestination {
+    override val route = "categories"
+    override val title = "Categories"
+}
+
 @Composable
 private fun CategoryRow(
     category: Category,
     onClick: () -> Unit,
-    isLast: Boolean = false,
-    hasArrow: Boolean = false
+    isLast: Boolean = false
 ) {
     Column(
         modifier = Modifier.clickable { onClick() }

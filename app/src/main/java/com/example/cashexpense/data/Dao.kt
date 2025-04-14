@@ -42,6 +42,13 @@ interface TransactionDao {
         ON T.accountIdFk = A.account_id WHERE A.account_id = :id
     """)
     fun getTransactionsWithAccountAndCategoryByAccount(id: Int): Flow<List<TransactionsWithAccountAndCategory>>
+
+    @Query("""
+        SELECT * FROM transactions AS T INNER JOIN categories AS C
+        ON T.categoryIdFk = C.category_id INNER JOIN accounts AS A
+        ON T.accountIdFk = A.account_id WHERE T.transaction_id = :id
+    """)
+    fun getTransactionWithAccountAndCategory(id: Int): Flow<TransactionsWithAccountAndCategory>
 }
 
 @Dao

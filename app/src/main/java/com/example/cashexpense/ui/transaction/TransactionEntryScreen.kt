@@ -12,6 +12,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -59,6 +61,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cashexpense.NavDestination
 import com.example.cashexpense.R
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.Category
@@ -68,6 +71,14 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 
+object TransactionEntryDestination: NavDestination {
+    override val route = "transaction_entry"
+    override val title = "Transaction"
+    val navTitle = "Add"
+    val selectedIcon = Icons.Filled.Add
+    val unselectedIcon = Icons.Outlined.Add
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionEntryScreen(
@@ -76,30 +87,19 @@ fun TransactionEntryScreen(
 ) {
     val accounts by viewModel.accountsState.collectAsState()
     val categories by viewModel.categoriesState.collectAsState()
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Transaction",
-                        style = MaterialTheme.typography.headlineLarge
-                    )
-                }
-            )
-        }
-    ) { innerPadding ->
-        TransactionEntryBody(
-            modifier = Modifier.padding(innerPadding),
-            transactionUiState = viewModel.transactionUiState,
-            onTransactionValueChange = viewModel::updateUiState,
-            onSaveClick = {
-                viewModel.saveTransaction()
-                navigateBack()
-            },
-            categories = categories,
-            accounts = accounts
-        )
-    }
+
+    TransactionEntryBody(
+        modifier = Modifier,
+        transactionUiState = viewModel.transactionUiState,
+        onTransactionValueChange = viewModel::updateUiState,
+        onSaveClick = {
+            viewModel.saveTransaction()
+            navigateBack()
+        },
+        categories = categories,
+        accounts = accounts
+    )
+
 }
 
 @Composable
@@ -194,7 +194,7 @@ private fun Accounts(
                         text = { Text(text = account.accountName) },
                         onClick = {
                             isDropDownExpanded.value = false
-                            onValueChange(transactionDetails.copy(account = account.accountName))
+                            onValueChange(transactionDetails.copy(account = account.accountName, accountId = account.id))
                         }
                     )
                 }
@@ -399,7 +399,7 @@ private fun Categories(
                         text = { Text(text = category.categoryName) },
                         onClick = {
                             isDropDownExpanded.value = false
-                            onValueChange(transactionDetails.copy(category = category.categoryName))
+                            onValueChange(transactionDetails.copy(category = category.categoryName, categoryId = category.id))
                         }
                     )
                 }

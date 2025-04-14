@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -16,11 +17,15 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -29,19 +34,33 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import androidx.navigation.NavHost
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.cashexpense.ui.home.HomeDestination
 import com.example.cashexpense.ui.home.HomeScreen
+import com.example.cashexpense.ui.home.TransactionDetailsDestination
+import com.example.cashexpense.ui.home.TransactionDetailsScreen
+import com.example.cashexpense.ui.reports.ReportDestination
+import com.example.cashexpense.ui.settings.CategoriesDestination
 import com.example.cashexpense.ui.settings.CategoriesScreen
+import com.example.cashexpense.ui.settings.SettingsDestination
 import com.example.cashexpense.ui.settings.SettingsScreen
 import com.example.cashexpense.ui.theme.CashExpenseTheme
+import com.example.cashexpense.ui.transaction.TransactionEntryDestination
 import com.example.cashexpense.ui.transaction.TransactionEntryScreen
 
 data class BottomNavigationItem(
     val title: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
+    val route: String
 )
 
 class MainActivity : ComponentActivity() {
@@ -51,78 +70,51 @@ class MainActivity : ComponentActivity() {
         setContent {
             CashExpenseTheme {
                 val navController = rememberNavController()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
 
-                val items = listOf(
-                    BottomNavigationItem(
-                        title = "Home",
-                        selectedIcon = Icons.Filled.Home,
-                        unselectedIcon = Icons.Outlined.Home
-                    ),
-                    BottomNavigationItem(
-                        title = "Reports",
-                        selectedIcon = Icons.Filled.ShoppingCart,
-                        unselectedIcon = Icons.Outlined.ShoppingCart
-                    ),
-                    BottomNavigationItem(
-                        title = "Add",
-                        selectedIcon = Icons.Filled.Add,
-                        unselectedIcon = Icons.Outlined.Add
-                    ),
-                    BottomNavigationItem(
-                        title = "Settings",
-                        selectedIcon = Icons.Filled.Settings,
-                        unselectedIcon = Icons.Outlined.Settings
-                    )
-                )
-                var selectedItemIndex by rememberSaveable {
-                    mutableStateOf(0)
-                }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        NavigationBar {
-                            items.forEachIndexed { index, item ->
-                                NavigationBarItem(
-                                    selected = selectedItemIndex == index,
-                                    onClick = {
-                                        selectedItemIndex = index
-                                        navController.navigate(item.title)
-                                    },
-                                    label = {
-                                        Text(text = item.title)
-                                    },
-                                    icon = {
-                                        Icon(
-                                            imageVector = if(index == selectedItemIndex) {
-                                                item.selectedIcon
-                                            } else item.unselectedIcon,
-                                            contentDescription = item.title
-                                        )
-                                    }
-                                )
-                            }
-                        }
+                    topBar = {
+                        TopAppBarContent(currentRoute, navController)
+                    },
+                    bottomBar = { if(currentRoute in bottomNavDestination.map { it.route}) {
+                        NavigationBar(currentRoute, navController)
+                    }
                     }
                 ) { innerPadding ->
                     NavHost(
                         navController = navController,
                         startDestination = "Home",
                         modifier = Modifier.padding(innerPadding)) {
-                        composable(route = "Home") {
-                            HomeScreen()
+                        composable(route = HomeDestination.route) {
+                            HomeScreen(navigateToTransactionDetails = {
+                                navController.navigate("${TransactionDetailsDestination.routeWithoutArgs}/${it}")
+                            },
+                                navController = navController)
                         }
                         composable(route = "Reports") {
                             Greeting("Reports")
                         }
-                        composable(route = "Add") {
+                        composable(route = TransactionEntryDestination.route) {
                             TransactionEntryScreen(
-                                navigateBack = { navController.navigate("Home") }
+                                navigateBack = { navController.navigate(HomeDestination.route) }
                             )
                         }
-                        composable(route = "Settings") {
+                        composable(
+                            route = TransactionDetailsDestination.route,
+                            arguments = listOf(navArgument(TransactionDetailsDestination.transactionIdArg) {
+                                type = NavType.IntType
+                            })
+                        ){
+                            TransactionDetailsScreen(
+                                navigateBack = { navController.navigate(HomeDestination.route) }
+                            )
+                        }
+                        composable(route = SettingsDestination.route) {
                             SettingsScreen(navController)
                         }
-                        composable(route = "Categories") {
+                        composable(route = CategoriesDestination.route) {
                             CategoriesScreen()
                         }
                     }
@@ -132,6 +124,132 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+interface NavDestination {
+    val route: String
+    val title: String
+}
+
+val bottomNavDestination = listOf(
+    HomeDestination,
+    TransactionEntryDestination,
+    SettingsDestination,
+    ReportDestination
+)
+val allDestinations = listOf(
+    HomeDestination,
+    TransactionEntryDestination,
+    TransactionDetailsDestination,
+    SettingsDestination,
+    CategoriesDestination,
+)
+
+@Composable
+fun NavigationBar(
+    currentRoute: String?,
+    navController: NavHostController
+) {
+    NavigationBar {
+        NavigationBarItem(
+            selected = currentRoute == HomeDestination.route,
+            onClick = {
+                if (currentRoute != HomeDestination.route) {
+                    navController.navigate(HomeDestination.route)
+                }
+            },
+            label = {
+                Text(text = HomeDestination.title)
+            },
+            icon = {
+                Icon(
+                    imageVector = if(currentRoute == HomeDestination.route) {
+                        HomeDestination.selectedIcon
+                    } else HomeDestination.unselectedIcon,
+                    contentDescription = HomeDestination.title
+                )
+            }
+        )
+        NavigationBarItem(
+            selected = currentRoute == HomeDestination.route,
+            onClick = {
+                if (currentRoute != HomeDestination.route) {
+                    navController.navigate(HomeDestination.route)
+                }
+            },
+            label = {
+                Text(text = HomeDestination.title)
+            },
+            icon = {
+                Icon(
+                    imageVector = if(currentRoute == HomeDestination.route) {
+                        HomeDestination.selectedIcon
+                    } else HomeDestination.unselectedIcon,
+                    contentDescription = HomeDestination.title
+                )
+            }
+        )
+        NavigationBarItem(
+            selected = currentRoute == TransactionEntryDestination.route,
+            onClick = {
+                if (currentRoute != TransactionEntryDestination.route) {
+                    navController.navigate(TransactionEntryDestination.route)
+                }
+            },
+            label = {
+                Text(text = TransactionEntryDestination.navTitle)
+            },
+            icon = {
+                Icon(
+                    imageVector = if(currentRoute == TransactionEntryDestination.route) {
+                        TransactionEntryDestination.selectedIcon
+                    } else TransactionEntryDestination.unselectedIcon,
+                    contentDescription = TransactionEntryDestination.title
+                )
+            }
+        )
+        NavigationBarItem(
+            selected = currentRoute == SettingsDestination.route,
+            onClick = {
+                if (currentRoute != SettingsDestination.route) {
+                    navController.navigate(SettingsDestination.route)
+                }
+            },
+            label = {
+                Text(text = SettingsDestination.title)
+            },
+            icon = {
+                Icon(
+                    imageVector = if(currentRoute == SettingsDestination.route) {
+                        SettingsDestination.selectedIcon
+                    } else SettingsDestination.unselectedIcon,
+                    contentDescription = SettingsDestination.title
+                )
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopAppBarContent(
+    currentRoute: String?,
+    navController: NavHostController
+) {
+    val destination = allDestinations.find {it.route == currentRoute}
+    val showBackButton = currentRoute !in bottomNavDestination.map {it.route}
+    destination?.let {
+        TopAppBar(
+            title = { Text(
+                text = it.title,
+                style = MaterialTheme.typography.headlineLarge
+            ) },
+            navigationIcon = { if(showBackButton) {
+                IconButton(onClick = {navController.popBackStack()}) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+            } }
+        )
+    }
+}
 
 
 @Composable

@@ -5,32 +5,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
-import com.example.cashexpense.data.OfflineRepository
-import com.example.cashexpense.data.Transaction
 import com.example.cashexpense.data.TransactionsWithAccountAndCategory
-import com.example.cashexpense.ui.settings.CategoryDetails
-import com.example.cashexpense.ui.transaction.TransactionType
+import com.example.cashexpense.ui.transaction.AccountDetails
+import com.example.cashexpense.ui.transaction.toDoubleWithTwoDecimalPlaces
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
-import java.sql.Date
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 class HomeScreenViewModel(
     private val repository: AppRepository
 ): ViewModel() {
 
-    var addAccountUiState by mutableStateOf(AddAccountUiState())
+    var accountUiState by mutableStateOf(AccountUiState())
         private set
 
     var homeUiState by mutableStateOf(HomeUiState())
@@ -51,17 +42,17 @@ class HomeScreenViewModel(
     fun saveAccount() {
         if(validateInput()) {
             viewModelScope.launch {
-                repository.insertAccount(addAccountUiState.toAccount())
+                repository.insertAccount(accountUiState.toAccount())
             }
         }
     }
 
-    fun updateAddAccountUiState(addAccountDetails: AddAccountDetails) {
-        addAccountUiState =
-            AddAccountUiState(addAccountDetails)
+    fun updateAccountUiState(accountDetails: AccountDetails) {
+        accountUiState =
+            AccountUiState(accountDetails)
     }
 
-    private fun validateInput(uiState: AddAccountDetails = addAccountUiState.addAccountDetails): Boolean {
+    private fun validateInput(uiState: AccountDetails = accountUiState.accountDetails): Boolean {
         return with(uiState) {
             accountName.isNotBlank()
         }
@@ -79,14 +70,8 @@ class HomeScreenViewModel(
 
 }
 
-data class AddAccountUiState(
-    val addAccountDetails: AddAccountDetails = AddAccountDetails()
-)
-
-data class AddAccountDetails(
-    val accountName: String = "",
-    val startingValue: String = "",
-    val accountColor: Long = 0xFFFFFFFF
+data class AccountUiState(
+    val accountDetails: AccountDetails = AccountDetails()
 )
 
 data class HomeUiState(
@@ -95,12 +80,13 @@ data class HomeUiState(
     val selectedAccount: Account? = accountList.firstOrNull()
 )
 
-fun AddAccountUiState.toAccount() = Account(
-    accountName = addAccountDetails.accountName,
-    accountColor = addAccountDetails.accountColor,
-    income = 0.0,
-    expense = 0.0,
-    accAmount = addAccountDetails.startingValue.toDoubleOrNull() ?: 0.0
+fun AccountUiState.toAccount() = Account(
+    id = accountDetails.id,
+    accountName = accountDetails.accountName,
+    accountColor = accountDetails.color,
+    income = accountDetails.income.toDoubleWithTwoDecimalPlaces(),
+    expense = accountDetails.expense.toDoubleWithTwoDecimalPlaces(),
+    accAmount = accountDetails.amount.toDoubleWithTwoDecimalPlaces()
 )
 
 

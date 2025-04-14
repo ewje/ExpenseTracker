@@ -22,6 +22,8 @@ interface AppRepository {
 
     fun getTransactionsWithAccountAndCategoryByAccount(id: Int): Flow<List<TransactionsWithAccountAndCategory>>
 
+    fun getTransactionWithAccountAndCategory(id: Int): Flow<TransactionsWithAccountAndCategory>
+
     suspend fun insertCategory(category: Category)
 
     suspend fun updateCategory(category: Category)

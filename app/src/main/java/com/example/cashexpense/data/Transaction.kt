@@ -63,9 +63,7 @@ fun List<TransactionsWithAccountAndCategory>.groupByDay(): Map<LocalDate, DayTra
         }
     }
 
-    dataMap.toSortedMap(Comparator.reverseOrder())
-
-    return dataMap
+    return dataMap.toSortedMap(Comparator.reverseOrder())
 }
 
 fun LocalDate.formatDate(): String {

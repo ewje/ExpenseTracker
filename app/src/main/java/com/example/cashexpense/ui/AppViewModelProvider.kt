@@ -1,11 +1,13 @@
 package com.example.cashexpense.ui
 
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.cashexpense.CashApplication
 import com.example.cashexpense.ui.home.HomeScreenViewModel
+import com.example.cashexpense.ui.home.TransactionDetailsViewModel
 import com.example.cashexpense.ui.settings.CategoriesScreenViewModel
 import com.example.cashexpense.ui.transaction.TransactionEntryViewModel
 
@@ -25,6 +27,13 @@ object AppViewModelProvider {
 
         initializer {
             TransactionEntryViewModel(
+                cashApplication().container.repository
+            )
+        }
+
+        initializer {
+            TransactionDetailsViewModel(
+                this.createSavedStateHandle(),
                 cashApplication().container.repository
             )
         }

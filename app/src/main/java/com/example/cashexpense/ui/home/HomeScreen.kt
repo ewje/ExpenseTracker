@@ -1,20 +1,15 @@
 package com.example.cashexpense.ui.home
 
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,18 +20,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,13 +36,9 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonColors
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,9 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -71,6 +57,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.cashexpense.NavDestination
 import com.example.cashexpense.R
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.Category
@@ -81,44 +69,40 @@ import com.example.cashexpense.data.formatDate
 import com.example.cashexpense.data.groupByDay
 import com.example.cashexpense.ui.AppViewModelProvider
 import com.example.cashexpense.ui.settings.ColorPicker
+import com.example.cashexpense.ui.transaction.AccountDetails
 import com.example.cashexpense.ui.transaction.TransactionType
+import com.example.cashexpense.ui.transaction.toAccount
+import com.example.cashexpense.ui.transaction.toAccountDetails
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import java.time.LocalDate
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+object HomeDestination: NavDestination {
+    override val route = "home"
+    override val title = "Home"
+    val selectedIcon = Icons.Filled.Home
+    val unselectedIcon = Icons.Outlined.Home
+}
+
+
 @Composable
 fun HomeScreen(
-    viewModel: HomeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: HomeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    navigateToTransactionDetails: (Int) -> Unit,
+    navController: NavController
 ){
     val transactions by viewModel.transactionsState.collectAsState()
     val accounts by viewModel.accountsState.collectAsState()
     val categories by viewModel.categoriesState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                /*colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                ),
-
-                 */
-                title = {
-                    Text(text = "Home",
-                        style = MaterialTheme.typography.headlineLarge)
-                }
-            )
-        }
-    ) { innerPadding ->
-        HomeBody(
-            accounts = accounts,
-            transactions = transactions,
-            categories = categories,
-            modifier = Modifier.padding(innerPadding).fillMaxSize(),
-            viewModel = viewModel
-        )
-    }
+    HomeBody(
+        accounts = accounts,
+        transactions = transactions,
+        categories = categories,
+        modifier = Modifier.fillMaxSize(),
+        viewModel = viewModel,
+        navigateToTransactionDetails = navigateToTransactionDetails
+    )
 }
 
 @Composable
@@ -127,10 +111,12 @@ private fun HomeBody(
     accounts: List<Account>,
     transactions: List<TransactionsWithAccountAndCategory>,
     categories: List<Category>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navigateToTransactionDetails: (Int) -> Unit
 ) {
     val selectedAcc: Account? = accounts.firstOrNull()
     val sortedTransactions = transactions.groupByDay()
+
     Column(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
         modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium))
@@ -141,8 +127,6 @@ private fun HomeBody(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
         ) {
             items(accounts) {account ->
-
-
                 AccountCard(
                     account,
                     selectedAccount = viewModel.homeUiState.selectedAccount ?: selectedAcc,
@@ -152,21 +136,29 @@ private fun HomeBody(
             item {
                 AddAccount(
                     onSaveClick = { viewModel.saveAccount() },
-                    addAccountDetails = viewModel.addAccountUiState.addAccountDetails,
-                    onAddAccountDetailsChange = viewModel::updateAddAccountUiState
+                    accountDetails = viewModel.accountUiState.accountDetails,
+                    onAccountDetailsChange = viewModel::updateAccountUiState
                 )
             }
         }
-        AmountCard(selectedAccount = viewModel.homeUiState.selectedAccount ?: selectedAcc)
+        AmountCard(
+            selectedAccount = viewModel.homeUiState.selectedAccount ?: selectedAcc,
+            onEditAccountDetailsChange = viewModel::updateAccountUiState,
+            editAccount = {account ->
+                viewModel.saveAccount()
+                viewModel.updateHomeUiState(account)
+            },
+            accountDetails = viewModel.accountUiState.accountDetails
+        )
 
-        Column() {
+        Column {
             Text(
                 text = "TransactionList",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
-            LazyColumn() {
+            LazyColumn {
                 itemsIndexed(
                     ArrayList(sortedTransactions.keys),
                     key = { _, date -> date}
@@ -175,7 +167,7 @@ private fun HomeBody(
                         transactions = sortedTransactions[date]!!,
                         date = date,
                         categories = categories,
-                        onClick = {}
+                        onClick = navigateToTransactionDetails
                     )
 
                 }
@@ -211,7 +203,7 @@ private fun AccountCard(
                 .padding(dimensionResource(id = R.dimen.padding_small))
                 .fillMaxSize(),
         ) {
-            Row() {
+            Row {
                 Text(
                     text = account.accountName,
                     style = MaterialTheme.typography.titleMedium
@@ -243,8 +235,8 @@ private fun AccountCard(
 private fun AddAccount(
     modifier: Modifier = Modifier,
     onSaveClick: () -> Unit,
-    addAccountDetails: AddAccountDetails,
-    onAddAccountDetailsChange: (AddAccountDetails) -> Unit
+    accountDetails: AccountDetails,
+    onAccountDetailsChange: (AccountDetails) -> Unit
 ) {
     val openDialog = remember { mutableStateOf(false) }
     OutlinedCard(
@@ -278,8 +270,8 @@ private fun AddAccount(
                 openDialog.value = false
             },
             saveAccount = onSaveClick,
-            addAccountDetails = addAccountDetails,
-            onAddAccountDetailsChange = onAddAccountDetailsChange
+            accountDetails = accountDetails,
+            onAccountDetailsChange = onAccountDetailsChange
         )
     }
 }
@@ -288,8 +280,8 @@ private fun AddAccount(
 private fun AddAccountDialog(
     onDismissRequest: () -> Unit,
     saveAccount: () -> Unit,
-    addAccountDetails: AddAccountDetails,
-    onAddAccountDetailsChange: (AddAccountDetails) -> Unit
+    accountDetails: AccountDetails,
+    onAccountDetailsChange: (AccountDetails) -> Unit
 ) {
     val controller = rememberColorPickerController()
     val openDialog = remember { mutableStateOf(false) }
@@ -318,7 +310,7 @@ private fun AddAccountDialog(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(CircleShape)
-                            .border(width = 2.dp, color = Color(addAccountDetails.accountColor), shape = CircleShape)
+                            .border(width = 2.dp, color = Color(accountDetails.color), shape = CircleShape)
                             .clickable { openDialog.value = true }
                     ) {
                         Box(
@@ -326,14 +318,14 @@ private fun AddAccountDialog(
                                 .size(18.dp)
                                 .clip(CircleShape)
                                 .align(Alignment.Center)
-                                .background(Color(addAccountDetails.accountColor))
+                                .background(Color(accountDetails.color))
                         )
                     }
                     Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_small)))
                     OutlinedTextField(
-                        value = addAccountDetails.accountName,
+                        value = accountDetails.accountName,
                         onValueChange = {
-                            onAddAccountDetailsChange(addAccountDetails.copy(accountName = it))
+                            onAccountDetailsChange(accountDetails.copy(accountName = it))
                         },
                         label = { Text("Account Name") },
                         colors = TextFieldDefaults.colors(
@@ -345,9 +337,9 @@ private fun AddAccountDialog(
                 }
 
                 OutlinedTextField(
-                    value = addAccountDetails.startingValue,
+                    value = accountDetails.amount,
                     onValueChange = {
-                        onAddAccountDetailsChange(addAccountDetails.copy(startingValue = it))
+                        onAccountDetailsChange(accountDetails.copy(amount = it))
                     },
                     label = { Text("Starting Value") },
                     colors = TextFieldDefaults.colors(
@@ -380,7 +372,7 @@ private fun AddAccountDialog(
                 openDialog.value = false
             },
             saveColor = {
-                onAddAccountDetailsChange(addAccountDetails.copy(accountColor = controller.selectedColor.value.toArgb().toLong()))
+                onAccountDetailsChange(accountDetails.copy(color = controller.selectedColor.value.toArgb().toLong()))
             },
             initialColor = Color(0xFFFFFFFF)
         )
@@ -388,12 +380,158 @@ private fun AddAccountDialog(
 }
 
 @Composable
+fun EditAccount(
+    selectedAccount: Account?,
+    onEditAccountDetailsChange: (AccountDetails) -> Unit,
+    onDismissRequest: () -> Unit,
+    editAccount: (Account) -> Unit,
+    accountDetails: AccountDetails
+) {
+    val controller = rememberColorPickerController()
+    val openDialog = remember { mutableStateOf(false) }
+    //accountDetails = AccountDetails.copy(selectedAccount?.toAccountDetails() ?: AccountDetails())
+    Dialog(
+        onDismissRequest = { onDismissRequest() }
+    ) {
+        Card(
+            modifier = Modifier
+        ) {
+            Column(
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
+            ) {
+                Text(
+                    text = "Edit Account",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider(
+                    thickness = 2.dp,
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .border(width = 2.dp, color = Color(accountDetails.color), shape = CircleShape)
+                            .clickable { openDialog.value = true }
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .align(Alignment.Center)
+                                .background(Color(accountDetails.color))
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_small)))
+                    OutlinedTextField(
+                        value = selectedAccount?.accountName ?: "",
+                        onValueChange = {
+                            onEditAccountDetailsChange(accountDetails.copy(accountName = it))
+                        },
+                        label = { Text("Account Name") },
+                        colors = TextFieldDefaults.colors(
+                            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.primary
+                        ),
+                        singleLine = true
+                    )
+                }
+
+                OutlinedTextField(
+                    value = accountDetails.amount,
+                    onValueChange = {
+                        onEditAccountDetailsChange(accountDetails.copy(amount = it))
+                    },
+                    label = { Text("Amount") },
+                    colors = TextFieldDefaults.colors(
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = accountDetails.income,
+                    onValueChange = {
+                        onEditAccountDetailsChange(accountDetails.copy(income = it))
+                    },
+                    label = { Text("Income") },
+                    colors = TextFieldDefaults.colors(
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = accountDetails.expense,
+                    onValueChange = {
+                        onEditAccountDetailsChange(accountDetails.copy(expense = it))
+                    },
+                    label = { Text("Expense") },
+                    colors = TextFieldDefaults.colors(
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number
+                    ),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                TextButton(
+                    onClick = {
+                        onDismissRequest()
+                        editAccount(accountDetails.toAccount())
+                    },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text( "Confirm" )
+                }
+            }
+        }
+    }
+    if (openDialog.value) {
+        ColorPicker(
+            controller = controller,
+            onDismissRequest = {
+                openDialog.value = false
+            },
+            saveColor = {
+                onEditAccountDetailsChange(accountDetails.copy(color = controller.selectedColor.value.toArgb().toLong()))
+            },
+            initialColor = Color(accountDetails.color)
+        )
+    }
+}
+
+@Composable
 private fun AmountCard(
     modifier: Modifier = Modifier,
-    selectedAccount: Account?
+    selectedAccount: Account?,
+    onEditAccountDetailsChange: (AccountDetails) -> Unit,
+    editAccount: (Account) -> Unit,
+    accountDetails: AccountDetails
 ) {
+    val openDialog = remember { mutableStateOf(false) }
     Card(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth().clickable {
+            openDialog.value = true
+            onEditAccountDetailsChange(selectedAccount?.toAccountDetails() ?: AccountDetails())
+        }
     ) {
         Column(
             modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_medium))
@@ -411,8 +549,6 @@ private fun AmountCard(
                         overflow = TextOverflow.Clip
                     )
                 }
-
-                //Spacer(modifier = Modifier.padding(dimensionResource(R.dimen.padding_extra_large)))
                 Box(modifier = Modifier.wrapContentWidth(), contentAlignment = Alignment.TopEnd) {
                     Text(
                         text = "$${selectedAccount?.accAmount ?: 0.0}",
@@ -427,7 +563,7 @@ private fun AmountCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column() {
+                Column {
                     Text(
                         text = "Income",
                         style = MaterialTheme.typography.titleMedium
@@ -437,7 +573,7 @@ private fun AmountCard(
                     style = MaterialTheme.typography.titleLarge
                     )
                 }
-                Column() {
+                Column {
                     Text(
                         text = "Expense",
                         style = MaterialTheme.typography.titleMedium
@@ -447,9 +583,18 @@ private fun AmountCard(
                         style = MaterialTheme.typography.titleLarge
                     )
                 }
-
             }
         }
+    }
+
+    if (openDialog.value) {
+        EditAccount(
+            selectedAccount = selectedAccount,
+            onDismissRequest = { openDialog.value = false },
+            onEditAccountDetailsChange = onEditAccountDetailsChange,
+            editAccount = editAccount,
+            accountDetails = accountDetails
+        )
     }
 }
 
@@ -458,9 +603,9 @@ private fun TransactionItem(
     transactions: DayTransactions,
     date: LocalDate,
     categories: List<Category>,
-    onClick: () -> Unit
+    onClick: (Int) -> Unit
 ) {
-    Column() {
+    Column {
 
         Text(
             text = date.formatDate(),
@@ -479,7 +624,7 @@ private fun TransactionItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(dimensionResource(id = R.dimen.padding_small))
-                    .clickable { onClick() },
+                    .clickable { onClick(transaction.transaction.id) },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ){

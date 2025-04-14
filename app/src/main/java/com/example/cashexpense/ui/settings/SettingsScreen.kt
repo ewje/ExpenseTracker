@@ -14,7 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -38,25 +40,23 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
+import com.example.cashexpense.NavDestination
 import com.example.cashexpense.R
+
+object SettingsDestination: NavDestination {
+    override val route = "settings"
+    override val title = "Settings"
+    val navTitle = "Settings"
+    val selectedIcon = Icons.Filled.Settings
+    val unselectedIcon = Icons.Outlined.Settings
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Settings",
-                        style = MaterialTheme.typography.headlineLarge
-                    )
-                }
-            )
-        }
-    ) { innerPadding ->
-        SettingsBody(modifier = Modifier.padding(innerPadding), navController)
-    }
+
+        SettingsBody(modifier = Modifier, navController)
+
 }
 
 @Composable
