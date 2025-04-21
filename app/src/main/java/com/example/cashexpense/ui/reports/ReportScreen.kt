@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,10 +17,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -59,7 +55,6 @@ import androidx.compose.ui.unit.center
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cashexpense.Greeting
 import com.example.cashexpense.NavDestination
 import com.example.cashexpense.R
 import com.example.cashexpense.data.Account
@@ -71,7 +66,6 @@ import com.example.cashexpense.data.groupByMonth
 import com.example.cashexpense.ui.AppViewModelProvider
 import com.example.cashexpense.ui.home.AccountCard
 import com.example.cashexpense.ui.home.TransactionItem
-import com.example.cashexpense.ui.settings.CategoryDetails
 import com.example.cashexpense.ui.transaction.TransactionType
 import kotlinx.coroutines.launch
 import java.time.YearMonth
@@ -191,8 +185,8 @@ fun CategoryPieChart(
                 PieChart(
                     originalExpenses = expensePieData,
                     totalExpense = expensePieData.sumOf { it.amount },
-                    onSliceClick = {PieData ->
-                        onSliceClick(categories.find {PieData.name == it.categoryName})
+                    onSliceClick = {pieData ->
+                        onSliceClick(categories.find {pieData.name == it.categoryName})
                     },
                     selectedCategory = selectedCategory
                 )

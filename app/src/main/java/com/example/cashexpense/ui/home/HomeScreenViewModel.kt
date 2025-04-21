@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
@@ -14,7 +13,6 @@ import com.example.cashexpense.ui.transaction.AccountDetails
 import com.example.cashexpense.ui.transaction.toDoubleWithTwoDecimalPlaces
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -63,12 +61,6 @@ class HomeScreenViewModel(
     private fun validateInput(uiState: AccountDetails = accountUiState.accountDetails): Boolean {
         return with(uiState) {
             accountName.isNotBlank()
-        }
-    }
-
-    private fun filterBy(accountId: Int) {
-        viewModelScope.launch {
-            repository.getTransactionsWithAccountAndCategoryByAccount(accountId).collectLatest {  }
         }
     }
 

@@ -114,11 +114,6 @@ fun List<TransactionsWithAccountAndCategory>.groupByMonth(): Map<YearMonth, Mont
     return dataMap.toSortedMap()
 }
 
-fun List<TransactionsWithAccountAndCategory>.groupByCategory(transactionType: TransactionType): Map<Category, List<TransactionsWithAccountAndCategory>> {
-    val transList = this.filter { it.transaction.type == transactionType }
-    return transList.groupBy { it.category }
-}
-
 fun LocalDate.formatDate(): String {
     val today = LocalDate.now()
     val yesterday = today.minusDays(1)

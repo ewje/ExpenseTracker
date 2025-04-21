@@ -1,6 +1,5 @@
 package com.example.cashexpense.ui.transaction
 
-import android.icu.text.DecimalFormat
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
