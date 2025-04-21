@@ -49,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -88,8 +89,7 @@ object HomeDestination: NavDestination {
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navigateToTransactionDetails: (Int) -> Unit,
-    navController: NavController
+    navigateToTransactionDetails: (Int) -> Unit
 ){
     val transactions by viewModel.transactionsState.collectAsState()
     val accounts by viewModel.accountsState.collectAsState()
@@ -148,7 +148,13 @@ private fun HomeBody(
                 viewModel.saveAccount()
                 viewModel.updateHomeUiState(account)
             },
-            accountDetails = viewModel.accountUiState.accountDetails
+            accountDetails = viewModel.accountUiState.accountDetails,
+            deleteAccount = {account ->
+                viewModel.deleteAccount(account)
+                if(accounts.isNotEmpty()){
+                    viewModel.updateHomeUiState(accounts.first())
+                }
+            }
         )
 
         Column {
@@ -169,7 +175,6 @@ private fun HomeBody(
                         categories = categories,
                         onClick = navigateToTransactionDetails
                     )
-
                 }
             }
         }
@@ -178,7 +183,7 @@ private fun HomeBody(
 }
 
 @Composable
-private fun AccountCard(
+fun AccountCard(
     account: Account,
     modifier: Modifier = Modifier,
     selectedAccount: Account?,
@@ -385,7 +390,8 @@ fun EditAccount(
     onEditAccountDetailsChange: (AccountDetails) -> Unit,
     onDismissRequest: () -> Unit,
     editAccount: (Account) -> Unit,
-    accountDetails: AccountDetails
+    accountDetails: AccountDetails,
+    deleteAccount: (Account) -> Unit
 ) {
     val controller = rememberColorPickerController()
     val openDialog = remember { mutableStateOf(false) }
@@ -492,14 +498,23 @@ fun EditAccount(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                TextButton(
-                    onClick = {
-                        onDismissRequest()
-                        editAccount(accountDetails.toAccount())
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text( "Confirm" )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TextButton(
+                        onClick = {
+                            onDismissRequest()
+                            deleteAccount(accountDetails.toAccount())
+                        }
+                    ) {
+                        Text("Delete")
+                    }
+                    TextButton(
+                        onClick = {
+                            onDismissRequest()
+                            editAccount(accountDetails.toAccount())
+                        }
+                    ) {
+                        Text( "Confirm" )
+                    }
                 }
             }
         }
@@ -524,7 +539,8 @@ private fun AmountCard(
     selectedAccount: Account?,
     onEditAccountDetailsChange: (AccountDetails) -> Unit,
     editAccount: (Account) -> Unit,
-    accountDetails: AccountDetails
+    accountDetails: AccountDetails,
+    deleteAccount: (Account) -> Unit
 ) {
     val openDialog = remember { mutableStateOf(false) }
     Card(
@@ -566,21 +582,25 @@ private fun AmountCard(
                 Column {
                     Text(
                         text = "Income",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorResource(R.color.income)
                     )
                     Text(
-                            text = "$${selectedAccount?.income ?: 0}",
-                    style = MaterialTheme.typography.titleLarge
+                        text = "$${selectedAccount?.income ?: 0}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colorResource(R.color.income)
                     )
                 }
                 Column {
                     Text(
                         text = "Expense",
-                        style = MaterialTheme.typography.titleMedium
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorResource(R.color.expense)
                     )
                     Text(
                         text = "$${selectedAccount?.expense ?: 0.0}",
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleLarge,
+                        color = colorResource(R.color.expense)
                     )
                 }
             }
@@ -593,13 +613,14 @@ private fun AmountCard(
             onDismissRequest = { openDialog.value = false },
             onEditAccountDetailsChange = onEditAccountDetailsChange,
             editAccount = editAccount,
-            accountDetails = accountDetails
+            accountDetails = accountDetails,
+            deleteAccount = deleteAccount
         )
     }
 }
 
 @Composable
-private fun TransactionItem(
+fun TransactionItem(
     transactions: DayTransactions,
     date: LocalDate,
     categories: List<Category>,
@@ -663,9 +684,9 @@ private fun TransactionItem(
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleLarge,
                     color = if (transaction.transaction.type == TransactionType.EXPENSE) {
-                        Color(0xFFC23C3C)
+                        colorResource(R.color.expense)
                     } else {
-                        Color(0xFF3EC738)
+                        colorResource(R.color.income)
                     }
 
                 )

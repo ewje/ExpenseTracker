@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
@@ -44,6 +45,13 @@ class HomeScreenViewModel(
             viewModelScope.launch {
                 repository.insertAccount(accountUiState.toAccount())
             }
+        }
+    }
+
+    fun deleteAccount(account: Account) {
+        viewModelScope.launch{
+            repository.deleteAccount(account)
+            repository.deleteTransactionsByAccountId(account.id)
         }
     }
 

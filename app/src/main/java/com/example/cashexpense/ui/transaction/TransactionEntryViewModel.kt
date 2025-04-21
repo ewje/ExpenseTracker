@@ -10,6 +10,7 @@ import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.data.Transaction
+import com.example.cashexpense.ui.settings.CategoryDetails
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -59,7 +60,7 @@ class TransactionEntryViewModel(
             when (transactionUiState.transactionDetails.type) {
                 TransactionType.EXPENSE -> {
                     account = account.copy(
-                        accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()),
+                        accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
                         expense = (account.expense + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
                         )
                     println(account.accAmount)
@@ -110,11 +111,13 @@ data class AccountDetails(
     val expense: String = "",
     val amount: String = ""
 )
-
+/*
 data class CategoryDetails(
     val categoryName: String = "",
     val color: Long = 0
 )
+
+ */
 
 enum class TransactionType(val label: String) {
     INCOME("Income"),
@@ -152,7 +155,8 @@ fun AccountDetails.toAccount(): Account = Account(
 )
 
 fun Category.toCategoryDetails(): CategoryDetails = CategoryDetails(
-    categoryName = categoryName,
+    id = id,
+    name = categoryName,
     color = color
 )
 
@@ -176,4 +180,8 @@ fun String.toDoubleWithTwoDecimalPlaces(): Double {
     } catch (e: NumberFormatException) {
         0.0 // Return default value if the string is not a valid number
     }
+}
+
+fun Double.toTwoDecimalPlaces(): Double {
+    return "%.2f".format(this).toDouble()
 }

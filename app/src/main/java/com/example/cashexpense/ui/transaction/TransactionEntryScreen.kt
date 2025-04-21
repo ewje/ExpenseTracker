@@ -1,7 +1,6 @@
 package com.example.cashexpense.ui.transaction
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,20 +30,18 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -66,7 +63,6 @@ import com.example.cashexpense.R
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.ui.AppViewModelProvider
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -74,12 +70,11 @@ import java.util.Locale
 object TransactionEntryDestination: NavDestination {
     override val route = "transaction_entry"
     override val title = "Transaction"
-    val navTitle = "Add"
+    const val navTitle = "Add"
     val selectedIcon = Icons.Filled.Add
     val unselectedIcon = Icons.Outlined.Add
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionEntryScreen(
     navigateBack: () -> Unit,
@@ -113,7 +108,7 @@ private fun TransactionEntryBody(
 ) {
     Column(
         modifier
-            .padding(dimensionResource(id = R.dimen.padding_medium))
+            .padding(start = dimensionResource(R.dimen.padding_medium), end = dimensionResource(R.dimen.padding_medium), top = dimensionResource(R.dimen.padding_medium))
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -213,7 +208,7 @@ private fun TransactionTypeButtons(
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         var selectedTypeIndex by rememberSaveable {
-            mutableStateOf(0)
+            mutableIntStateOf(0)
         }
         val type = listOf(
             TransactionType.EXPENSE,

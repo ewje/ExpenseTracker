@@ -51,6 +51,7 @@ import com.example.cashexpense.NavDestination
 import com.example.cashexpense.R
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.ui.AppViewModelProvider
+import com.example.cashexpense.ui.transaction.toCategoryDetails
 import com.github.skydoves.colorpicker.compose.AlphaTile
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
 import com.github.skydoves.colorpicker.compose.ColorPickerController
@@ -111,7 +112,11 @@ private fun CategoriesBody(
                     CategoryRow(
                         category = category,
                         isLast = isLast,
-                        onClick = { deleteCategory(category) }
+                        onClick = { categoryDetails ->
+                            onCategoryDetailsChange(categoryDetails)
+                            println(categoryDetails)
+                        },
+                        onDelete = { deleteCategory(category) }
                     )
                 }
             }
@@ -262,12 +267,14 @@ object CategoriesDestination: NavDestination {
 @Composable
 private fun CategoryRow(
     category: Category,
-    onClick: () -> Unit,
+    onClick: (CategoryDetails) -> Unit,
+    onDelete: () -> Unit,
     isLast: Boolean = false
 ) {
     Column(
-        modifier = Modifier.clickable { onClick() }
+        modifier = Modifier.clickable { onClick(category.toCategoryDetails()) }
     ) {
+        println(category)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -299,7 +306,7 @@ private fun CategoryRow(
             Icon(
                 Icons.Outlined.Delete,
                 contentDescription = "",
-                modifier = Modifier.clickable { onClick() }
+                modifier = Modifier.clickable { onDelete() }
                 //tint = Color.Gray
             )
 
@@ -319,6 +326,7 @@ private fun CategoryRow(
 private fun CategoryScreenPreview() {
     CategoryRow(
         category = Category(categoryName = "Hello", color = 0xFFFFFFFF),
-        onClick = {}
+        onClick = {},
+        onDelete = {}
     )
 }

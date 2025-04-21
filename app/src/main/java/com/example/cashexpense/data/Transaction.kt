@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.example.cashexpense.ui.transaction.TransactionType
 import java.time.Instant
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Comparator
@@ -34,7 +35,7 @@ data class TransactionsWithAccountAndCategory(
 
 data class DayTransactions(
     val transactions: MutableList<TransactionsWithAccountAndCategory>,
-    val total: Double
+    var total: Double
 )
 
 fun List<TransactionsWithAccountAndCategory>.groupByDay(): Map<LocalDate, DayTransactions> {
@@ -47,6 +48,18 @@ fun List<TransactionsWithAccountAndCategory>.groupByDay(): Map<LocalDate, DayTra
                 .atZone(ZoneId.systemDefault())           // Adjust into the wall-clock time used by the people of a particular region (a time zone). Produces a `ZonedDateTime` object.
                 .toLocalDate()
 
+        val dayData = dataMap.getOrPut(date) {
+            DayTransactions(mutableListOf(), 0.0)
+        }
+
+        dayData.transactions.add(transaction)
+        val amount = transaction.transaction.transAmount
+        if (transaction.transaction.type == TransactionType.INCOME) {
+            dayData.total += amount
+        } else {
+            dayData.total -= amount
+        }
+/*
         if (dataMap[date] == null) {
             dataMap[date] = DayTransactions(
                 transactions = mutableListOf(),
@@ -61,9 +74,49 @@ fun List<TransactionsWithAccountAndCategory>.groupByDay(): Map<LocalDate, DayTra
         } else {
             dataMap[date]?.total?.minus(transaction.transaction.transAmount)
         }
+
+ */
     }
 
     return dataMap.toSortedMap(Comparator.reverseOrder())
+}
+
+data class MonthTransactions(
+    val yearMonth: YearMonth,
+    val transactions: MutableList<TransactionsWithAccountAndCategory>,
+    var income: Double,
+    var expense: Double
+)
+
+fun List<TransactionsWithAccountAndCategory>.groupByMonth(): Map<YearMonth, MonthTransactions> {
+    val dataMap: MutableMap<YearMonth, MonthTransactions> = mutableMapOf()
+
+    this.forEach { transaction ->
+        val yearMonth = Instant.ofEpochMilli(transaction.transaction.date)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .let { YearMonth.from(it) }
+
+        val monthData = dataMap.getOrPut(yearMonth) {
+            MonthTransactions(yearMonth, mutableListOf(), 0.0, 0.0)
+        }
+
+        monthData.transactions.add(transaction)
+        val amount = transaction.transaction.transAmount
+
+        if (transaction.transaction.type == TransactionType.INCOME) {
+            monthData.income += amount
+        } else {
+            monthData.expense += amount
+        }
+    }
+
+    return dataMap.toSortedMap()
+}
+
+fun List<TransactionsWithAccountAndCategory>.groupByCategory(transactionType: TransactionType): Map<Category, List<TransactionsWithAccountAndCategory>> {
+    val transList = this.filter { it.transaction.type == transactionType }
+    return transList.groupBy { it.category }
 }
 
 fun LocalDate.formatDate(): String {

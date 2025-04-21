@@ -41,8 +41,8 @@ import com.example.cashexpense.NavigationBar
 import com.example.cashexpense.R
 import com.example.cashexpense.data.formatDate
 import com.example.cashexpense.ui.AppViewModelProvider
+import com.example.cashexpense.ui.settings.CategoryDetails
 import com.example.cashexpense.ui.transaction.AccountDetails
-import com.example.cashexpense.ui.transaction.CategoryDetails
 import com.example.cashexpense.ui.transaction.TransactionDetails
 import java.time.Instant
 import java.time.ZoneId
@@ -201,7 +201,7 @@ fun TransactionDetailsCard(
                             .background(Color(categoryDetails.color))
                     )
                     Text(
-                        text = categoryDetails.categoryName,
+                        text = categoryDetails.name,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )

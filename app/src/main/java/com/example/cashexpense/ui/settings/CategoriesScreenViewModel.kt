@@ -49,6 +49,7 @@ class CategoriesScreenViewModel(
     fun deleteCategory(category: Category) {
         viewModelScope.launch {
             repository.deleteCategory(category = category)
+            repository.deleteTransactionsByCategoryId(category.id)
         }
     }
 
@@ -64,11 +65,13 @@ data class CategoryUiState(
 )
 
 data class CategoryDetails(
+    val id: Int = 0,
     val color: Long = 0xFFFFFFFF,
     val name: String = ""
 )
 
 fun CategoryDetails.toCategory() = Category(
+    id = id,
     categoryName =  name,
     color = color
 )

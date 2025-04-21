@@ -24,15 +24,15 @@ interface AppRepository {
 
     fun getTransactionWithAccountAndCategory(id: Int): Flow<TransactionsWithAccountAndCategory>
 
-    suspend fun insertCategory(category: Category)
+    suspend fun deleteTransactionsByAccountId(id: Int)
 
-    suspend fun updateCategory(category: Category)
+    suspend fun deleteTransactionsByCategoryId(id: Int)
+
+    suspend fun insertCategory(category: Category)
 
     suspend fun deleteCategory(category: Category)
 
     suspend fun insertTransaction(transaction: Transaction)
-
-    suspend fun updateTransaction(transaction: Transaction)
 
     suspend fun deleteTransaction(transaction: Transaction)
 

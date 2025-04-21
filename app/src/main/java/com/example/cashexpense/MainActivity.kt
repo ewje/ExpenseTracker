@@ -1,6 +1,5 @@
 package com.example.cashexpense
 
-import android.media.Image
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,15 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.ShoppingCart
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,15 +18,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavController
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -48,6 +33,7 @@ import com.example.cashexpense.ui.home.HomeScreen
 import com.example.cashexpense.ui.home.TransactionDetailsDestination
 import com.example.cashexpense.ui.home.TransactionDetailsScreen
 import com.example.cashexpense.ui.reports.ReportDestination
+import com.example.cashexpense.ui.reports.ReportsScreen
 import com.example.cashexpense.ui.settings.CategoriesDestination
 import com.example.cashexpense.ui.settings.CategoriesScreen
 import com.example.cashexpense.ui.settings.SettingsDestination
@@ -56,12 +42,6 @@ import com.example.cashexpense.ui.theme.CashExpenseTheme
 import com.example.cashexpense.ui.transaction.TransactionEntryDestination
 import com.example.cashexpense.ui.transaction.TransactionEntryScreen
 
-data class BottomNavigationItem(
-    val title: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
-    val route: String
-)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,11 +70,12 @@ class MainActivity : ComponentActivity() {
                         composable(route = HomeDestination.route) {
                             HomeScreen(navigateToTransactionDetails = {
                                 navController.navigate("${TransactionDetailsDestination.routeWithoutArgs}/${it}")
-                            },
-                                navController = navController)
+                            })
                         }
-                        composable(route = "Reports") {
-                            Greeting("Reports")
+                        composable(route = ReportDestination.route) {
+                            ReportsScreen(navigateToTransactionDetails = {
+                                navController.navigate("${TransactionDetailsDestination.routeWithoutArgs}/${it}")
+                            })
                         }
                         composable(route = TransactionEntryDestination.route) {
                             TransactionEntryScreen(
@@ -141,6 +122,7 @@ val allDestinations = listOf(
     TransactionDetailsDestination,
     SettingsDestination,
     CategoriesDestination,
+    ReportDestination
 )
 
 @Composable
@@ -169,21 +151,21 @@ fun NavigationBar(
             }
         )
         NavigationBarItem(
-            selected = currentRoute == HomeDestination.route,
+            selected = currentRoute == ReportDestination.route,
             onClick = {
-                if (currentRoute != HomeDestination.route) {
-                    navController.navigate(HomeDestination.route)
+                if (currentRoute != ReportDestination.route) {
+                    navController.navigate(ReportDestination.route)
                 }
             },
             label = {
-                Text(text = HomeDestination.title)
+                Text(text = ReportDestination.title)
             },
             icon = {
                 Icon(
-                    imageVector = if(currentRoute == HomeDestination.route) {
-                        HomeDestination.selectedIcon
-                    } else HomeDestination.unselectedIcon,
-                    contentDescription = HomeDestination.title
+                    imageVector = if(currentRoute == ReportDestination.route) {
+                        ReportDestination.selectedIcon
+                    } else ReportDestination.unselectedIcon,
+                    contentDescription = ReportDestination.title
                 )
             }
         )
@@ -244,7 +226,7 @@ fun TopAppBarContent(
             ) },
             navigationIcon = { if(showBackButton) {
                 IconButton(onClick = {navController.popBackStack()}) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             } }
         )

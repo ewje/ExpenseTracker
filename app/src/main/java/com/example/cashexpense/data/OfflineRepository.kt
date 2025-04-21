@@ -31,12 +31,16 @@ class OfflineRepository(
     override fun getTransactionWithAccountAndCategory(id: Int): Flow<TransactionsWithAccountAndCategory> =
         transactionDao.getTransactionWithAccountAndCategory(id)
 
-    override suspend fun insertCategory(category: Category){
-        categoryDao.insertCategory(category)
+    override suspend fun deleteTransactionsByAccountId(id: Int) {
+        transactionDao.deleteTransactionsByAccountId(id)
     }
 
-    override suspend fun updateCategory(category: Category){
-        categoryDao.updateCategory(category)
+    override suspend fun deleteTransactionsByCategoryId(id: Int) {
+        transactionDao.deleteTransactionByCategoryId(id)
+    }
+
+    override suspend fun insertCategory(category: Category){
+        categoryDao.insertCategory(category)
     }
 
     override suspend fun deleteCategory(category: Category){
@@ -47,10 +51,6 @@ class OfflineRepository(
         transactionDao.insertTransaction(transaction)
     }
 
-    override suspend fun updateTransaction(transaction: Transaction){
-        transactionDao.updateTransaction(transaction)
-    }
-
     override suspend fun deleteTransaction(transaction: Transaction){
         transactionDao.deleteTransaction(transaction)
     }
@@ -59,7 +59,7 @@ class OfflineRepository(
         accountDao.insertAccount(account)
     }
 
-    override suspend fun updateAccount(account: Account){
+    override suspend fun updateAccount(account: Account) {
         accountDao.updateAccount(account)
     }
 

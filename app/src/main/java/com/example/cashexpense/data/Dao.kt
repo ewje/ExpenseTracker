@@ -8,6 +8,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Upsert
 import com.example.cashexpense.data.relation.AccountWithTransaction
 import com.example.cashexpense.data.relation.CategoryWithTransaction
 import kotlinx.coroutines.flow.Flow
@@ -16,9 +17,6 @@ import kotlinx.coroutines.flow.Flow
 interface TransactionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: Transaction)
-
-    @Update(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun updateTransaction(transaction: Transaction)
 
     @Delete
     suspend fun deleteTransaction(transaction: Transaction)
@@ -49,6 +47,12 @@ interface TransactionDao {
         ON T.accountIdFk = A.account_id WHERE T.transaction_id = :id
     """)
     fun getTransactionWithAccountAndCategory(id: Int): Flow<TransactionsWithAccountAndCategory>
+
+    @Query("DELETE FROM transactions WHERE accountIdFk = :accountId")
+    suspend fun deleteTransactionsByAccountId(accountId: Int)
+
+    @Query("DELETE FROM transactions WHERE categoryIDFk = :categoryId")
+    suspend fun deleteTransactionByCategoryId(categoryId: Int)
 }
 
 @Dao
@@ -73,9 +77,6 @@ interface AccountDao {
 interface CategoryDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategory(category: Category)
-
-    @Update(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun updateCategory(category: Category)
 
     @Delete
     suspend fun deleteCategory(category: Category)
