@@ -50,7 +50,8 @@ object TransactionDetailsDestination: NavDestination {
 @Composable
 fun TransactionDetailsScreen(
     viewModel: TransactionDetailsViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navigateBack: () -> Unit
+    navigateBack: () -> Unit,
+    navigateToTransactionEdit: (Int) -> Unit
 ) {
     val transaction by viewModel.uiState.collectAsState()
     TransactionDetailsBody(
@@ -59,7 +60,8 @@ fun TransactionDetailsScreen(
         onDelete = {
             viewModel.deleteTransaction()
             navigateBack()
-        }
+        },
+        navigateToTransactionEdit = navigateToTransactionEdit
     )
 
 }
@@ -68,7 +70,8 @@ fun TransactionDetailsScreen(
 fun TransactionDetailsBody(
     modifier: Modifier,
     transactionDetailsUiState: TransactionDetailsUiState,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    navigateToTransactionEdit: (Int) -> Unit
 ) {
     Column(
         modifier = modifier.padding(dimensionResource(R.dimen.padding_medium)),
@@ -84,7 +87,7 @@ fun TransactionDetailsBody(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
         ) {
             Button(
-                onClick = {},
+                onClick = {navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id)},
                 modifier = Modifier.weight(0.3f)
             ) {
                 Text("Edit")

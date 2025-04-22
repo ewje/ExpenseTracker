@@ -34,6 +34,8 @@ interface AppRepository {
 
     suspend fun insertTransaction(transaction: Transaction)
 
+    suspend fun updateTransaction(transaction: Transaction)
+
     suspend fun deleteTransaction(transaction: Transaction)
 
     suspend fun insertAccount(account: Account)

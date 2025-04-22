@@ -60,14 +60,14 @@ class TransactionEntryViewModel(
                 TransactionType.EXPENSE -> {
                     account = account.copy(
                         accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
-                        expense = (account.expense + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
+                        //expense = (account.expense + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
                         )
                     println(account.accAmount)
                 }
                 TransactionType.INCOME -> {
                     account = account.copy(
                         accAmount = (account.accAmount + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()),
-                        income = (account.income + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
+                        //income = (account.income + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
                     )
                 }
                 TransactionType.TRANSFER -> {
@@ -81,7 +81,6 @@ class TransactionEntryViewModel(
             }
         }
     }
-
 }
 
 data class TransactionUiState(
@@ -105,7 +104,7 @@ data class TransactionDetails(
 data class AccountDetails(
     val id: Int = 0,
     val accountName: String = "",
-    val color: Long = 0,
+    val color: Long = 0xFFFFFFFF,
     val income: String = "",
     val expense: String = "",
     val amount: String = ""
@@ -132,7 +131,7 @@ fun Transaction.toTransactionDetails(): TransactionDetails = TransactionDetails(
     details = details,
     type = type,
     categoryId = categoryIdFk,
-    accountId = accountIdFk
+    accountId = accountIdFk,
 )
 
 fun Account.toAccountDetails(): AccountDetails = AccountDetails(

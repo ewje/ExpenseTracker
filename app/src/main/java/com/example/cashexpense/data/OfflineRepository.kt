@@ -50,6 +50,10 @@ class OfflineRepository(
         transactionDao.insertTransaction(transaction)
     }
 
+    override suspend fun updateTransaction(transaction: Transaction) {
+        transactionDao.updateTransaction(transaction)
+    }
+
     override suspend fun deleteTransaction(transaction: Transaction){
         transactionDao.deleteTransaction(transaction)
     }

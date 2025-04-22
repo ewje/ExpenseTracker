@@ -92,19 +92,20 @@ fun TransactionEntryScreen(
             navigateBack()
         },
         categories = categories,
-        accounts = accounts
+        accounts = accounts,
+        buttonText = "Add Transaction"
     )
-
 }
 
 @Composable
-private fun TransactionEntryBody(
+fun TransactionEntryBody(
     modifier: Modifier,
     transactionUiState: TransactionUiState,
     onTransactionValueChange: (TransactionDetails) -> Unit,
     onSaveClick: () -> Unit,
     categories: List<Category>,
-    accounts: List<Account>
+    accounts: List<Account>,
+    buttonText: String
 ) {
     Column(
         modifier
@@ -142,7 +143,7 @@ private fun TransactionEntryBody(
         Button(onClick = {
             onSaveClick()
         }) {
-            Text("Add Transaction")
+            Text(buttonText)
         }
     }
 }

@@ -10,6 +10,7 @@ import com.example.cashexpense.ui.home.HomeScreenViewModel
 import com.example.cashexpense.ui.home.TransactionDetailsViewModel
 import com.example.cashexpense.ui.reports.ReportScreenViewModel
 import com.example.cashexpense.ui.settings.CategoriesScreenViewModel
+import com.example.cashexpense.ui.transaction.TransactionEditViewModel
 import com.example.cashexpense.ui.transaction.TransactionEntryViewModel
 
 object AppViewModelProvider {
@@ -34,6 +35,13 @@ object AppViewModelProvider {
 
         initializer {
             TransactionDetailsViewModel(
+                this.createSavedStateHandle(),
+                cashApplication().container.repository
+            )
+        }
+
+        initializer {
+            TransactionEditViewModel(
                 this.createSavedStateHandle(),
                 cashApplication().container.repository
             )

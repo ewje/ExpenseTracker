@@ -157,6 +157,15 @@ fun ReportsBody(
                 categories = category,
                 navigateToTransactionDetails =navigateToTransactionDetails
             )
+        } else {
+            Card{
+                Text(
+                    text = "Add some Transactions!",
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_extra_large))
+                )
+            }
         }
     }
 }
@@ -266,6 +275,11 @@ private fun PieChart(originalExpenses: List<PieData>, totalExpense: Double, onSl
         contentAlignment = Alignment.Center, modifier = Modifier.padding()
             .size(200.dp)
     ) {
+        val gapAngle = if(expenses.size > 1) {
+            12f
+        } else {
+            0f
+        }
         Canvas(
             modifier = Modifier.fillMaxSize().padding(dimensionResource(R.dimen.padding_small))
                 .pointerInput(expenses, sweepAngles) {
@@ -289,7 +303,7 @@ private fun PieChart(originalExpenses: List<PieData>, totalExpense: Double, onSl
                             println(touchAngle)
                             sweepAngles.forEachIndexed { index, sweep ->
                                 val sweepWithoutGap =
-                                    sweep - 12f // Match the gap used in drawing
+                                    sweep - gapAngle // Match the gap used in drawing
                                 val end = start + sweepWithoutGap
 
                                 if (touchAngle in start..end) {
@@ -302,7 +316,7 @@ private fun PieChart(originalExpenses: List<PieData>, totalExpense: Double, onSl
                     }
                 }
         ) {
-            val gapAngle = 12f
+
             expenses.forEachIndexed { index, expense ->
                 drawArc(
                     color = Color(expense.color),
@@ -370,6 +384,11 @@ fun MonthlyBarChart(
 
 @Composable
 fun BarItem(barData: MonthTransactions, isSelected: Boolean, maxValue: Double, onClick: (YearMonth) -> Unit) {
+    val maxBarHeight = 190.dp
+
+    // Convert max value and data values to consistent heights
+    val incomeHeight = (barData.income / maxValue).toFloat().coerceIn(0f, 1f) * maxBarHeight.value
+    val expenseHeight = (barData.expense / maxValue).toFloat().coerceIn(0f, 1f) * maxBarHeight.value
     Column(
         modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)).clickable { onClick(barData.yearMonth) },
         horizontalAlignment = Alignment.CenterHorizontally
@@ -382,13 +401,13 @@ fun BarItem(barData: MonthTransactions, isSelected: Boolean, maxValue: Double, o
             Row (verticalAlignment = Alignment.Bottom) {
                 Box(
                     modifier = Modifier.width(20.dp)
-                        .height(((barData.income / maxValue * 200.0).toInt()).dp)
+                        .height(incomeHeight.dp)//((barData.income / maxValue * 200.0).toInt())
                         .background(colorResource(R.color.income), shape = RoundedCornerShape(4.dp))
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Box(
                     modifier = Modifier.width(20.dp)
-                        .height((barData.expense * 200.0 / maxValue).dp)
+                        .height(expenseHeight.dp)//(barData.expense * 200.0 / maxValue)
                         .background(colorResource(R.color.expense), shape = RoundedCornerShape(4.dp))
                 )
             }
@@ -405,7 +424,9 @@ fun BarItem(barData: MonthTransactions, isSelected: Boolean, maxValue: Double, o
 @Composable
 fun BarChart(selectedYearMonth: YearMonth, listData: Map<YearMonth, MonthTransactions>, onClick: (YearMonth) -> Unit) {
     val scrollState = rememberScrollState()
-    val maxValue = (listData.maxOfOrNull { maxOf(it.value.income, it.value.expense) } ?: 1.0 ).toInt() + 10
+    //val maxValue = (listData.maxOfOrNull { maxOf(it.value.income, it.value.expense) } ?: 1.0 ).toInt()
+    val rawMax = listData.maxOfOrNull { maxOf(it.value.income, it.value.expense) } ?: 1.0
+    val maxValue = (rawMax * 1.1).roundToInt().coerceAtLeast(1)
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(listData.size) {
         coroutineScope.launch {
@@ -413,8 +434,12 @@ fun BarChart(selectedYearMonth: YearMonth, listData: Map<YearMonth, MonthTransac
         }
     }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-        Column(modifier = Modifier.padding(bottom = 22.dp).height(200.dp), verticalArrangement = Arrangement.spacedBy(32.dp)) {
-            (0..(maxValue-10) step (maxValue-10) / 4).reversed().forEach {
+        Column(modifier = Modifier.padding(bottom = 22.dp).height(200.dp), verticalArrangement = Arrangement.SpaceBetween) {
+            //(0..(maxValue) step (maxValue) / 4).reversed().forEach {
+            val step = (maxValue / 4.0).roundToInt().coerceAtLeast(1)
+            val labels = (step * 4 downTo 0 step step).toMutableList()
+            if (!labels.contains(0)) labels.add(0) // Make sure 0 is included
+            labels.sortedDescending().forEach {
                 Text(
                     text = "$it",
                     color = Color.Gray,

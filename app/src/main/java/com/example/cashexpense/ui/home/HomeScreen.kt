@@ -40,8 +40,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -113,14 +116,26 @@ private fun HomeBody(
     modifier: Modifier = Modifier,
     navigateToTransactionDetails: (Int) -> Unit
 ) {
-    val selectedAcc: Account? = accounts.firstOrNull()
+    var selectedAcc: Account? = accounts.firstOrNull()
     val sortedTransactions = transactions.groupByDay()
+    println("selected account = ${viewModel.homeUiState.selectedAccount}")
+
+    LaunchedEffect(accounts) {
+        if(accounts.isNotEmpty()){
+            viewModel.updateHomeUiState(accounts.first())
+        } else {
+            viewModel.updateHomeUiState(null)
+            selectedAcc = null
+        }
+    }
+
+    val income = getIncome(transactions, viewModel.homeUiState.selectedAccount?:selectedAcc)
+    val expense = getExpense(transactions, viewModel.homeUiState.selectedAccount?:selectedAcc)
 
     Column(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
         modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium))
     ) {
-
         LazyRow(
             modifier = Modifier,
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium))
@@ -134,7 +149,10 @@ private fun HomeBody(
             }
             item {
                 AddAccount(
-                    onSaveClick = { viewModel.saveAccount() },
+                    onSaveClick = {
+                        viewModel.saveAccount()
+                        viewModel.updateAccountUiState(AccountDetails())
+                    },
                     accountDetails = viewModel.accountUiState.accountDetails,
                     onAccountDetailsChange = viewModel::updateAccountUiState
                 )
@@ -150,10 +168,9 @@ private fun HomeBody(
             accountDetails = viewModel.accountUiState.accountDetails,
             deleteAccount = {account ->
                 viewModel.deleteAccount(account)
-                if(accounts.isNotEmpty()){
-                    viewModel.updateHomeUiState(accounts.first())
-                }
-            }
+            },
+            income = income,
+            expense = expense
         )
 
         Column {
@@ -462,7 +479,7 @@ fun EditAccount(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-
+/*
                 OutlinedTextField(
                     value = accountDetails.income,
                     onValueChange = {
@@ -496,6 +513,8 @@ fun EditAccount(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+ */
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     TextButton(
@@ -539,83 +558,87 @@ private fun AmountCard(
     onEditAccountDetailsChange: (AccountDetails) -> Unit,
     editAccount: (Account) -> Unit,
     accountDetails: AccountDetails,
-    deleteAccount: (Account) -> Unit
+    deleteAccount: (Account) -> Unit,
+    income: Double,
+    expense: Double
 ) {
-    val openDialog = remember { mutableStateOf(false) }
-    Card(
-        modifier = modifier.fillMaxWidth().clickable {
-            openDialog.value = true
-            onEditAccountDetailsChange(selectedAccount?.toAccountDetails() ?: AccountDetails())
-        }
-    ) {
-        Column(
-            modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_medium))
+
+    //key(selectedAccount) {
+        val openDialog = remember() { mutableStateOf(false) }
+        Card(
+            modifier = modifier.fillMaxWidth().clickable {
+                openDialog.value = true
+                onEditAccountDetailsChange(selectedAccount?.toAccountDetails() ?: AccountDetails())
+            }
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
+            Column(
+                modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_medium))
             ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = selectedAccount?.accountName ?: "Create an Account!",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.fillMaxWidth(),
-                        maxLines = Int.MAX_VALUE,
-                        overflow = TextOverflow.Clip
-                    )
-                }
-                Box(modifier = Modifier.wrapContentWidth(), contentAlignment = Alignment.TopEnd) {
-                    Text(
-                        text = "$${selectedAccount?.accAmount ?: 0.0}",
-                        style = MaterialTheme.typography.displayLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = selectedAccount?.accountName ?: "Create an Account!",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = Int.MAX_VALUE,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
+                    Box(modifier = Modifier.wrapContentWidth(), contentAlignment = Alignment.TopEnd) {
+                        Text(
+                            text = "$${selectedAccount?.accAmount ?: 0.0}",
+                            style = MaterialTheme.typography.displayLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
-            }
-            Spacer(modifier = Modifier.padding(32.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Income",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorResource(R.color.income)
-                    )
-                    Text(
-                        text = "$${selectedAccount?.income ?: 0}",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = colorResource(R.color.income)
-                    )
                 }
-                Column {
-                    Text(
-                        text = "Expense",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorResource(R.color.expense)
-                    )
-                    Text(
-                        text = "$${selectedAccount?.expense ?: 0.0}",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = colorResource(R.color.expense)
-                    )
+                Spacer(modifier = Modifier.padding(32.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Income",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colorResource(R.color.income)
+                        )
+                        Text(
+                            text = "$${income}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = colorResource(R.color.income)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Expense",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = colorResource(R.color.expense)
+                        )
+                        Text(
+                            text = "$${expense}",//selectedAccount?.expense ?: 0.0}",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = colorResource(R.color.expense)
+                        )
+                    }
                 }
             }
         }
-    }
+        if (openDialog.value) {
+            EditAccount(
+                selectedAccount = selectedAccount,
+                onDismissRequest = { openDialog.value = false },
+                onEditAccountDetailsChange = onEditAccountDetailsChange,
+                editAccount = editAccount,
+                accountDetails = accountDetails,
+                deleteAccount = deleteAccount
+            )
+        }
 
-    if (openDialog.value) {
-        EditAccount(
-            selectedAccount = selectedAccount,
-            onDismissRequest = { openDialog.value = false },
-            onEditAccountDetailsChange = onEditAccountDetailsChange,
-            editAccount = editAccount,
-            accountDetails = accountDetails,
-            deleteAccount = deleteAccount
-        )
-    }
 }
 
 @Composable

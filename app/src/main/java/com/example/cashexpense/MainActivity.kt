@@ -39,6 +39,8 @@ import com.example.cashexpense.ui.settings.CategoriesScreen
 import com.example.cashexpense.ui.settings.SettingsDestination
 import com.example.cashexpense.ui.settings.SettingsScreen
 import com.example.cashexpense.ui.theme.CashExpenseTheme
+import com.example.cashexpense.ui.transaction.TransactionEditDestination
+import com.example.cashexpense.ui.transaction.TransactionEditScreen
 import com.example.cashexpense.ui.transaction.TransactionEntryDestination
 import com.example.cashexpense.ui.transaction.TransactionEntryScreen
 
@@ -89,6 +91,19 @@ class MainActivity : ComponentActivity() {
                             })
                         ){
                             TransactionDetailsScreen(
+                                navigateBack = { navController.navigate(HomeDestination.route) },
+                                navigateToTransactionEdit = {
+                                    navController.navigate("${TransactionEditDestination.routeWithoutArgs}/${it}")
+                                }
+                            )
+                        }
+                        composable(
+                            route = TransactionEditDestination.route,
+                            arguments = listOf(navArgument(TransactionEditDestination.transactionIdArg) {
+                                type = NavType.IntType
+                            })
+                        ){
+                            TransactionEditScreen(
                                 navigateBack = { navController.navigate(HomeDestination.route) }
                             )
                         }
@@ -120,6 +135,7 @@ val allDestinations = listOf(
     HomeDestination,
     TransactionEntryDestination,
     TransactionDetailsDestination,
+    TransactionEditDestination,
     SettingsDestination,
     CategoriesDestination,
     ReportDestination

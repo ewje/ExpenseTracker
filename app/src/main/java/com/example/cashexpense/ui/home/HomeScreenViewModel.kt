@@ -10,6 +10,7 @@ import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.data.TransactionsWithAccountAndCategory
 import com.example.cashexpense.ui.transaction.AccountDetails
+import com.example.cashexpense.ui.transaction.TransactionType
 import com.example.cashexpense.ui.transaction.toDoubleWithTwoDecimalPlaces
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,7 +31,7 @@ class HomeScreenViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val transactionsState: StateFlow<List<TransactionsWithAccountAndCategory>> = _transactionsState
 
-    private val _accountsState: StateFlow<List<Account>> = repository.getAllAccountsStream()
+    private var _accountsState: StateFlow<List<Account>> = repository.getAllAccountsStream()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val accountsState: StateFlow<List<Account>> = _accountsState
 
@@ -64,7 +65,7 @@ class HomeScreenViewModel(
         }
     }
 
-    fun updateHomeUiState(account: Account) {
+    fun updateHomeUiState(account: Account?) {
         homeUiState = homeUiState.copy(selectedAccount = account)
     }
 
@@ -89,5 +90,12 @@ fun AccountUiState.toAccount() = Account(
     accAmount = accountDetails.amount.toDoubleWithTwoDecimalPlaces()
 )
 
+fun getIncome(list: List<TransactionsWithAccountAndCategory>, account: Account?): Double {
+    val newList = list.filter {it.account == account && it.transaction.type == TransactionType.INCOME}
+    return newList.sumOf {it.transaction.transAmount}
+}
 
-
+fun getExpense(list: List<TransactionsWithAccountAndCategory>, account: Account?): Double {
+    val newList = list.filter {it.account == account && it.transaction.type == TransactionType.EXPENSE}
+    return newList.sumOf {it.transaction.transAmount}
+}
