@@ -44,8 +44,8 @@ object TransactionDetailsDestination: NavDestination {
     const val routeWithoutArgs = "transaction_details"
     override val title = "Transaction Details"
     const val transactionId1 = "transactionId1"
-    //const val transactionId2 = "transactionId2"
-    override val route = "$routeWithoutArgs/{$transactionId1}"
+    const val transactionId2 = "transactionId2"
+    override val route = "$routeWithoutArgs/{$transactionId1}?${transactionId2}={${transactionId2}}"
 }
 
 
@@ -53,9 +53,10 @@ object TransactionDetailsDestination: NavDestination {
 fun TransactionDetailsScreen(
     viewModel: TransactionDetailsViewModel = viewModel(factory = AppViewModelProvider.Factory),
     navigateBack: () -> Unit,
-    navigateToTransactionEdit: (Int) -> Unit
+    navigateToTransactionEdit: (Int, Int) -> Unit
 ) {
     val transaction by viewModel.uiState.collectAsState()
+    //println("${viewModel.transactionId2} and ${viewModel.transactionId1}")
     TransactionDetailsBody(
         modifier = Modifier,
         transactionDetailsUiState = transaction,
@@ -74,7 +75,7 @@ fun TransactionDetailsBody(
     modifier: Modifier,
     transactionDetailsUiState: TransactionDetailsUiState,
     onDelete: () -> Unit,
-    navigateToTransactionEdit: (Int) -> Unit,
+    navigateToTransactionEdit: (Int, Int) -> Unit,
     viewModel: TransactionDetailsViewModel
 ) {
     Column(
@@ -93,15 +94,13 @@ fun TransactionDetailsBody(
             if(transactionDetailsUiState.transactionDetails.type != TransactionType.TRANSFERIN){
                 Button(
                     onClick = {
-                        /*
                         if(transactionDetailsUiState.transactionDetails.type == TransactionType.INCOME || transactionDetailsUiState.transactionDetails.type == TransactionType.EXPENSE) {
-                            navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id, 0)
+                            navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id, -1)
                         } else {
-                            navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id, viewModel.transactionId2)
+                            navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id, viewModel.transactionId2?: -1)
+                            //println("${transactionDetailsUiState.transactionDetails.id}, ${viewModel.transactionId2}")
                         }
-
-                         */
-                        navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id)
+                        //navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id)
                     },
                     modifier = Modifier.weight(0.3f)
                 ) {

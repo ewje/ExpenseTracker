@@ -8,12 +8,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cashexpense.NavDestination
 import com.example.cashexpense.ui.AppViewModelProvider
 
+
 object TransactionEditDestination: NavDestination {
     const val routeWithoutArgs = "transaction_edit"
     override val title = "Edit Transaction"
     const val transactionId1 = "transactionEditId1"
-    //const val transactionId2 = "transactionEditId2"
-    override val route = "$routeWithoutArgs/{$transactionId1}"
+    const val transactionId2 = "transactionEditId2"
+    override val route = "$routeWithoutArgs/{$transactionId1}?${transactionId2}={${transactionId2}}"
 }
 
 @Composable
@@ -23,7 +24,6 @@ fun TransactionEditScreen(
 ){
     val accounts by viewModel.accountsState.collectAsState()
     val categories by viewModel.categoriesState.collectAsState()
-    println(viewModel.transactionUiState.transactionDetails)
     TransactionEntryBody(
         modifier = Modifier,
         transactionUiState = viewModel.transactionUiState,

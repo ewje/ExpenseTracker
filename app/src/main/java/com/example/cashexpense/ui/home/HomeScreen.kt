@@ -91,7 +91,7 @@ object HomeDestination: NavDestination {
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navigateToTransactionDetails: (Int) -> Unit
+    navigateToTransactionDetails: (Int, Int?) -> Unit
 ){
     val transactions by viewModel.transactionsState.collectAsState()
     val accounts by viewModel.accountsState.collectAsState()
@@ -114,7 +114,7 @@ private fun HomeBody(
     transactions: List<TransactionsWithAccountAndCategory>,
     categories: List<Category>,
     modifier: Modifier = Modifier,
-    navigateToTransactionDetails: (Int) -> Unit
+    navigateToTransactionDetails: (Int, Int?) -> Unit
 ) {
     var selectedAcc: Account? = accounts.firstOrNull()
     val sortedTransactions = transactions.groupByDay()
@@ -643,7 +643,7 @@ fun TransactionItem(
     transactions: DayTransactions,
     date: LocalDate,
     categories: List<Category>,
-    onClick: (Int) -> Unit
+    onClick: (Int, Int) -> Unit
 ) {
     Column {
 
@@ -665,19 +665,16 @@ fun TransactionItem(
                     .fillMaxWidth()
                     .padding(dimensionResource(id = R.dimen.padding_small))
                     .clickable {
-                        /*
                         if(transaction.transaction.type == TransactionType.INCOME || transaction.transaction.type == TransactionType.EXPENSE) {
-                            onClick(transaction.transaction.id, 0)
+                            onClick(transaction.transaction.id, -1)
                         } else {
                             onClick(
                                 transaction.transaction.id,
                                 transactions.transactions.find {
-                                    (it.transaction.transAmount == transaction.transaction.transAmount) && (it.transaction.details == transaction.transaction.details)
-                                }?.transaction?.id ?: 0)
+                                    (it.transaction.transAmount == transaction.transaction.transAmount) && (it.transaction.details == transaction.transaction.details) && (it.transaction.id != transaction.transaction.id)
+                                }?.transaction?.id?: -1)
                         }
-
-                         */
-                        onClick(transaction.transaction.id)
+                        //onClick(transaction.transaction.id)
                     },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically

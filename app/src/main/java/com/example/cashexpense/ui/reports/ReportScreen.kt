@@ -87,7 +87,7 @@ object ReportDestination: NavDestination {
 @Composable
 fun ReportsScreen(
     viewModel: ReportScreenViewModel = viewModel(factory = AppViewModelProvider.Factory),
-    navigateToTransactionDetails: (Int) -> Unit
+    navigateToTransactionDetails: (Int, Int) -> Unit
 ) {
     val transactions by viewModel.transactionState.collectAsState()
     val categories by viewModel.categoriesState.collectAsState()
@@ -113,7 +113,7 @@ fun ReportsBody(
     category: List<Category>,
     accounts: List<Account>,
     uiState: ReportsUiState,
-    navigateToTransactionDetails: (Int) -> Unit
+    navigateToTransactionDetails: (Int, Int) -> Unit
 ) {
     val transactionsByType = transactions.groupBy { it.transaction.type }
     Column(
@@ -350,7 +350,7 @@ fun MonthlyBarChart(
     selectedYearMonth: YearMonth,
     listData: Map<YearMonth, MonthTransactions>,
     onClick: (YearMonth) -> Unit,
-    navigateToTransactionDetails: (Int) -> Unit,
+    navigateToTransactionDetails: (Int, Int) -> Unit,
     categories: List<Category>
 ) {
     Card(modifier = Modifier)  {

@@ -25,6 +25,7 @@ class TransactionEditViewModel(
         private set
 
     private lateinit var initialTransaction: TransactionDetails
+    private lateinit var transferInTransaction: TransactionDetails
 
     private val _categoriesState: StateFlow<List<Category>> = repository.getAllCategoriesStream()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -34,7 +35,9 @@ class TransactionEditViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val accountsState: StateFlow<List<Account>> = _accountsState
 
-    private val transactionId1: Int = checkNotNull(savedStateHandle[TransactionEditDestination.transactionId1])
+    val transactionId1: Int = checkNotNull(savedStateHandle[TransactionEditDestination.transactionId1])
+
+    val transactionId2 = savedStateHandle.get<Int>(TransactionEditDestination.transactionId2)?.takeIf { it != -1 }
 
     //val initialTransaction: TransactionDetails = repository.getTransactionStream(transactionId).filterNotNull().first().toTransactionDetails()
 
@@ -47,6 +50,19 @@ class TransactionEditViewModel(
                 amount = "$${transaction.amount}")
             transactionUiState = TransactionUiState(transaction)
             initialTransaction = transaction
+
+            if(transactionId2 != null) {
+                transferInTransaction = repository.getTransactionStream(transactionId2).filterNotNull().first().toTransactionDetails()
+                transferInTransaction = transferInTransaction.copy(
+                    account = accountsState.value.find { it.id == transferInTransaction.accountId }?.accountName ?: "",
+                    category = categoriesState.value.find { it.id == transaction.categoryId }?.categoryName ?: "",
+                    amount = "$${transaction.amount}"
+                )
+                transactionUiState = transactionUiState.copy(transactionDetails = transactionUiState.transactionDetails.copy(destinationAccount = transferInTransaction.account))
+                initialTransaction = initialTransaction.copy(destinationAccount = transferInTransaction.account)
+            } else {
+                transferInTransaction = TransactionDetails()
+            }
         }
     }
 
@@ -66,7 +82,15 @@ class TransactionEditViewModel(
             viewModelScope.launch {
                 if(transactionUiState.transactionDetails.type != TransactionType.TRANSFER) {
                     repository.updateTransaction(transactionUiState.transactionDetails.toTransaction())
-
+                } else {
+                    repository.updateTransaction(transactionUiState.transactionDetails.toTransfer())
+                    transferInTransaction = transferInTransaction.copy(
+                        amount = transactionUiState.transactionDetails.amount,
+                        date = transactionUiState.transactionDetails.date,
+                        account = transactionUiState.transactionDetails.destinationAccount,
+                        destinationAccount = ""
+                    )
+                    repository.updateTransaction(transactionUiState.transactionDetails.copy(id = transferInTransaction.id).toTransferIn(accountsState.value))
                 }
                 editAccountValue()
             }
@@ -75,78 +99,78 @@ class TransactionEditViewModel(
 
     private fun editAccountValue() {
         val accounts = accountsState.value
+
         var account = accounts.find { it.accountName.trim() == transactionUiState.transactionDetails.account.trim() }
+        var destinationAccount = accounts.find{ it.accountName.trim() == transactionUiState.transactionDetails.destinationAccount.trim() }
+
         var initialAccount = accounts.find { it.accountName == initialTransaction.account }
-        val same: Boolean
-        println("$account + $initialAccount + $initialTransaction")
+        var initialDestination = accounts.find { it.accountName == initialTransaction.destinationAccount }
+
+        var same: Boolean = false
+
+        val newAmount = transactionUiState.transactionDetails.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()
+        val oldAmount = initialTransaction.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()
+
+        val updatedAccounts = mutableMapOf<Int, Account>()
+
         if (account != null && initialAccount != null) {
             when (transactionUiState.transactionDetails.type) {
                 TransactionType.EXPENSE -> {
-                    if(initialAccount == account) {
+                    if (initialAccount == account) {
                         account = account.copy(
-                            accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces() + initialTransaction.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
-                            //expense = (account.expense + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces() - initialTransaction.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces()
+                            accAmount = (account.accAmount - newAmount + oldAmount).toTwoDecimalPlaces()
                         )
                         same = true
                     } else {
-                        account = account.copy(
-                            accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
-                            //expense = (account.expense + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces()
-                        )
-                        initialAccount = initialAccount.copy(
-                            accAmount = (initialAccount.accAmount + initialTransaction.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
-                            //expense = (initialAccount.expense - initialTransaction.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces()
-                        )
-                        same = false
+                        account = account.copy(accAmount = (account.accAmount - newAmount).toTwoDecimalPlaces())
+                        initialAccount = initialAccount.copy(accAmount = (initialAccount.accAmount + oldAmount).toTwoDecimalPlaces())
                     }
+
+                    updatedAccounts[account.id] = account
+                    if (!same) updatedAccounts[initialAccount.id] = initialAccount
                 }
                 TransactionType.INCOME -> {
-                    if(initialAccount == account) {
+                    if (initialAccount == account) {
                         account = account.copy(
-                            accAmount = (account.accAmount + transactionUiState.transactionDetails.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces() - initialTransaction.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
-                            //income = (account.expense + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces() - initialTransaction.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces()
+                            accAmount = (account.accAmount + newAmount - oldAmount).toTwoDecimalPlaces()
                         )
                         same = true
                     } else {
-                        account = account.copy(
-                            accAmount = (account.accAmount + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()),
-                            //income = (account.income + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
-                        )
-                        initialAccount = initialAccount.copy(
-                            accAmount = (initialAccount.accAmount - initialTransaction.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
-                            //income = (initialAccount.income - initialTransaction.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces()
-                        )
-                        same = false
+                        account = account.copy(accAmount = (account.accAmount + newAmount).toTwoDecimalPlaces())
+                        initialAccount = initialAccount.copy(accAmount = (initialAccount.accAmount - oldAmount).toTwoDecimalPlaces())
                     }
-                }
 
+                    updatedAccounts[account.id] = account
+                    if (!same) updatedAccounts[initialAccount.id] = initialAccount
+                }
                 TransactionType.TRANSFER -> {
-                    if(initialAccount == account) {
-                        account = account.copy(
-                            accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces() + initialTransaction.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces()
-                        )
-                        same = true
-                    } else {
-                        account = account.copy(
-                            accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
-                        )
-                        initialAccount = initialAccount.copy(
-                            accAmount = (initialAccount.accAmount + initialTransaction.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
-                        )
-                        same = false
+                    if (destinationAccount != null && initialDestination != null) {
+                        // Copy to avoid mutating shared references
+                        updatedAccounts[initialAccount.id] = updatedAccounts[initialAccount.id]?.let {
+                            it.copy(accAmount = it.accAmount + oldAmount)
+                        } ?: initialAccount.copy(accAmount = initialAccount.accAmount + oldAmount)
+
+                        updatedAccounts[initialDestination.id] = updatedAccounts[initialDestination.id]?.let {
+                            it.copy(accAmount = it.accAmount - oldAmount)
+                        } ?: initialDestination.copy(accAmount = initialDestination.accAmount - oldAmount)
+
+                        // Apply new transfer
+                        updatedAccounts[account.id] = updatedAccounts[account.id]?.let {
+                            it.copy(accAmount = it.accAmount - newAmount)
+                        } ?: account.copy(accAmount = account.accAmount - newAmount)
+
+                        updatedAccounts[destinationAccount.id] = updatedAccounts[destinationAccount.id]?.let {
+                            it.copy(accAmount = it.accAmount + newAmount)
+                        } ?: destinationAccount.copy(accAmount = destinationAccount.accAmount + newAmount)
                     }
                 }
-
                 TransactionType.TRANSFERIN -> {
                     same = true
                 }
             }
             viewModelScope.launch {
-                if(same) {
-                    repository.updateAccount(account)
-                } else {
-                    repository.updateAccount(account)
-                    repository.updateAccount(initialAccount)
+                updatedAccounts.values.forEach { updated ->
+                    repository.updateAccount(updated.copy(accAmount = updated.accAmount.toTwoDecimalPlaces()))
                 }
             }
         }

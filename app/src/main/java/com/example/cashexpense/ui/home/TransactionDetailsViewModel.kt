@@ -27,7 +27,7 @@ class TransactionDetailsViewModel(
     private val repository: AppRepository
 ): ViewModel() {
     private val transactionId1: Int = checkNotNull(savedStateHandle[TransactionDetailsDestination.transactionId1])
-    //val transactionId2: Int = checkNotNull(savedStateHandle[TransactionDetailsDestination.transactionId2])
+    val transactionId2 = savedStateHandle.get<Int>("transactionId2")?.takeIf {it != -1}
     val uiState: StateFlow<TransactionDetailsUiState> =
         repository.getTransactionWithAccountAndCategory(transactionId1)
             .filterNotNull()
@@ -47,6 +47,7 @@ class TransactionDetailsViewModel(
             editAccountValue()
         }
     }
+
     private fun editAccountValue() {
         var account = uiState.value.accountDetails
         when (uiState.value.transactionDetails.type) {

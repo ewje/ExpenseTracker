@@ -428,7 +428,7 @@ private fun Categories(
             )
 
             ExposedDropdownMenu(expanded = isDropDownExpanded.value, onDismissRequest = { isDropDownExpanded.value = false }) {
-                categories.forEach { category ->
+                categories.filter {it.id != 100001}.forEach { category ->
                     DropdownMenuItem(
                         text = { Text(text = category.categoryName) },
                         onClick = {

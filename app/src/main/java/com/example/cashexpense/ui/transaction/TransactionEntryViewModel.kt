@@ -200,6 +200,7 @@ fun TransactionDetails.toTransfer(): Transaction {
 
 fun TransactionDetails.toTransferIn(accounts: List<Account>): Transaction {
     return Transaction(
+        id = id,
         title = "$destinationAccount Transfer In",
         transAmount = amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces(),
         date = date,

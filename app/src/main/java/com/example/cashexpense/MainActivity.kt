@@ -70,13 +70,29 @@ class MainActivity : ComponentActivity() {
                         startDestination = "Home",
                         modifier = Modifier.padding(innerPadding)) {
                         composable(route = HomeDestination.route) {
-                            HomeScreen(navigateToTransactionDetails = {
-                                navController.navigate("${TransactionDetailsDestination.routeWithoutArgs}/${it}")
+                            HomeScreen(navigateToTransactionDetails = { id1, id2 ->
+                                val base = TransactionDetailsDestination.routeWithoutArgs
+                                val route = if (id2 != -1) {
+                                    "$base/$id1?${
+                                        TransactionDetailsDestination.transactionId2
+                                    }=$id2"
+                                } else {
+                                    "$base/$id1"
+                                }
+                                navController.navigate(route)
                             })
                         }
                         composable(route = ReportDestination.route) {
-                            ReportsScreen(navigateToTransactionDetails = {
-                                navController.navigate("${TransactionDetailsDestination.routeWithoutArgs}/${it}")
+                            ReportsScreen(navigateToTransactionDetails = { id1, id2 ->
+                                val base = TransactionDetailsDestination.routeWithoutArgs
+                                val route = if (id2 != -1) {
+                                    "$base/$id1?${
+                                        TransactionDetailsDestination.transactionId2
+                                    }=$id2"
+                                } else {
+                                    "$base/$id1"
+                                }
+                                navController.navigate(route)
                             })
                         }
                         composable(route = TransactionEntryDestination.route) {
@@ -89,13 +105,25 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(
                                 navArgument(TransactionDetailsDestination.transactionId1) {
                                     type = NavType.IntType
+                                },
+                                navArgument(TransactionDetailsDestination.transactionId2) {
+                                    type = NavType.IntType
+                                    defaultValue = -1
                                 }
                             )
                         ){
                             TransactionDetailsScreen(
                                 navigateBack = { navController.navigate(HomeDestination.route) },
-                                navigateToTransactionEdit = {
-                                    navController.navigate("${TransactionEditDestination.routeWithoutArgs}/${it}")
+                                navigateToTransactionEdit = { id1, id2 ->
+                                    val base = TransactionEditDestination.routeWithoutArgs
+                                    val route = if (id2 != -1) {
+                                        "$base/$id1?${
+                                            TransactionEditDestination.transactionId2
+                                        }=$id2"
+                                    } else {
+                                        "$base/$id1"
+                                    }
+                                    navController.navigate(route)
                                 }
                             )
                         }
@@ -104,6 +132,10 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(
                                 navArgument(TransactionEditDestination.transactionId1) {
                                     type = NavType.IntType
+                                },
+                                navArgument(TransactionEditDestination.transactionId2) {
+                                    type = NavType.IntType
+                                    defaultValue = -1
                                 }
                             )
                         ){
