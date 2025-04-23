@@ -68,7 +68,7 @@ fun CategoriesScreen(
         onSaveClick = {
             viewModel.saveCategory()
         },
-        categories = categories,
+        categories = categories.filter {it.id != 100001},
         isButtonEnabled = viewModel.isButtonEnabled(),
         deleteCategory = {category ->
             viewModel.deleteCategory(category)

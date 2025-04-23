@@ -1,12 +1,19 @@
 package com.example.cashexpense.ui.transaction
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -30,6 +37,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -39,6 +49,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -114,11 +125,6 @@ fun TransactionEntryBody(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Accounts(
-            accounts = accounts,
-            transactionUiState.transactionDetails,
-            onValueChange = onTransactionValueChange
-        )
         TransactionTypeButtons(
             transactionUiState.transactionDetails,
             onValueChange = onTransactionValueChange
@@ -131,15 +137,31 @@ fun TransactionEntryBody(
             transactionUiState.transactionDetails,
             onValueChange = onTransactionValueChange
         )
-        Categories(
-            categories = categories,
+        Accounts(
+            accounts = accounts,
             transactionUiState.transactionDetails,
-            onValueChange = onTransactionValueChange
+            onValueChange = onTransactionValueChange,
+            isDestination = false
         )
-        Details(
-            transactionUiState.transactionDetails,
-            onValueChange = onTransactionValueChange
-        )
+        if(transactionUiState.transactionDetails.type != TransactionType.TRANSFER) {
+            Categories(
+                categories = categories,
+                transactionUiState.transactionDetails,
+                onValueChange = onTransactionValueChange
+            )
+            Details(
+                transactionUiState.transactionDetails,
+                onValueChange = onTransactionValueChange
+            )
+        } else {
+            Text(text = "Transfer To")
+            Accounts(
+                accounts = accounts,
+                transactionDetails = transactionUiState.transactionDetails,
+                onValueChange = onTransactionValueChange,
+                isDestination = true
+            )
+        }
         Button(onClick = {
             onSaveClick()
         }) {
@@ -155,44 +177,64 @@ private fun Accounts(
     accounts: List<Account>,
     transactionDetails: TransactionDetails,
     onValueChange: (TransactionDetails) -> Unit = {},
+    isDestination: Boolean
 ) {
-    val isDropDownExpanded = remember { mutableStateOf(false) }
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable {
-            isDropDownExpanded.value = true
-        }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
     ) {
-        ExposedDropdownMenuBox(
-            expanded = isDropDownExpanded.value,
-            onExpandedChange = { isDropDownExpanded.value = !isDropDownExpanded.value },
-            modifier = Modifier
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            //horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
         ) {
-            TextField(
-                readOnly = true,
-                value = transactionDetails.account,
-                onValueChange = {},
-                label = { Text(text = "Account") },
-                trailingIcon = {
-                    TrailingIcon(expanded = isDropDownExpanded.value)
-                },
-                colors = TextFieldDefaults.colors(
-                    unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent
-                ),
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-            )
-
-            ExposedDropdownMenu(expanded = isDropDownExpanded.value, onDismissRequest = { isDropDownExpanded.value = false }) {
-                accounts.forEach { account ->
-                    DropdownMenuItem(
-                        text = { Text(text = account.accountName) },
-                        onClick = {
-                            isDropDownExpanded.value = false
-                            onValueChange(transactionDetails.copy(account = account.accountName, accountId = account.id))
+            items(accounts) {account ->
+                if((isDestination && account.accountName != transactionDetails.account) || !isDestination){
+                    Row{
+                        OutlinedButton(
+                            onClick = {
+                                if(isDestination) {
+                                    onValueChange(
+                                        transactionDetails.copy(
+                                            destinationAccount = account.accountName
+                                        )
+                                    )
+                                } else {
+                                    onValueChange(
+                                        transactionDetails.copy(
+                                            account = account.accountName,
+                                            accountId = account.id
+                                        )
+                                    )
+                                }
+                            },
+                            border = BorderStroke(
+                                width = 1.dp,
+                                color = if((!isDestination && account.accountName == transactionDetails.account) || (isDestination && account.accountName == transactionDetails.destinationAccount) ) Color(account.accountColor) else Color.LightGray
+                            ),
+                            modifier = Modifier.defaultMinSize(minWidth = 1.dp, minHeight = 36.dp),
+                            contentPadding = PaddingValues(dimensionResource(R.dimen.padding_small))
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small))
+                            ){
+                                RadioButton(
+                                    selected = if (!isDestination) {(transactionDetails.account == account.accountName)} else {(transactionDetails.destinationAccount == account.accountName)},
+                                    onClick = null,
+                                    colors = RadioButtonColors(
+                                        selectedColor = Color(account.accountColor),
+                                        unselectedColor = Color(account.accountColor),
+                                        disabledSelectedColor = Color(account.accountColor),
+                                        disabledUnselectedColor = Color(account.accountColor)
+                                    )
+                                )
+                                //Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+                                Text(text = account.accountName)
+                                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
+                            }
                         }
-                    )
+                        Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+                    }
                 }
             }
         }
@@ -204,32 +246,28 @@ private fun TransactionTypeButtons(
     transactionDetails: TransactionDetails,
     onValueChange: (TransactionDetails) -> Unit = {},
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        var selectedTypeIndex by rememberSaveable {
-            mutableIntStateOf(0)
-        }
-        val type = listOf(
-            TransactionType.EXPENSE,
-            TransactionType.INCOME,
-            TransactionType.TRANSFER,
-        )
-        type.forEachIndexed { index, item ->
-            FilledTonalButton(
-                onClick = {
-                    selectedTypeIndex = index
-                    onValueChange(transactionDetails.copy(type = item))
-                },
-                colors = if(selectedTypeIndex == index) {
-                    ButtonDefaults.buttonColors()
-                } else ButtonDefaults.filledTonalButtonColors()
-            ) {
-                Text(text = item.name)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            val type = listOf(
+                TransactionType.EXPENSE,
+                TransactionType.INCOME,
+                TransactionType.TRANSFER,
+            )
+            type.forEachIndexed { index, item ->
+                FilledTonalButton(
+                    onClick = {
+                        onValueChange(transactionDetails.copy(type = item))
+                    },
+                    colors = if(transactionDetails.type == item) {
+                        ButtonDefaults.buttonColors()
+                    } else ButtonDefaults.filledTonalButtonColors()
+                ) {
+                    Text(text = item.name)
+                }
             }
         }
-    }
 }
 
 
@@ -414,18 +452,22 @@ private fun Details(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            TextField(
-                value = transactionDetails.title,
-                onValueChange = { onValueChange(transactionDetails.copy(title = it)) },
-                label = { Text("Title") },
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                singleLine = true
-            )
-            HorizontalDivider(thickness = 2.dp,
-                modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)))
+            if(transactionDetails.type != TransactionType.TRANSFER) {
+                TextField(
+                    value = transactionDetails.title,
+                    onValueChange = { onValueChange(transactionDetails.copy(title = it)) },
+                    label = { Text("Title") },
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    singleLine = true
+                )
+                HorizontalDivider(
+                    thickness = 2.dp,
+                    modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium))
+                )
+            }
             TextField(
                 value = transactionDetails.details,
                 onValueChange = { onValueChange(transactionDetails.copy(details = it)) },

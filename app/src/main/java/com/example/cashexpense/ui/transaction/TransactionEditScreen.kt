@@ -11,8 +11,9 @@ import com.example.cashexpense.ui.AppViewModelProvider
 object TransactionEditDestination: NavDestination {
     const val routeWithoutArgs = "transaction_edit"
     override val title = "Edit Transaction"
-    const val transactionIdArg = "transactionEditId"
-    override val route = "$routeWithoutArgs/{$transactionIdArg}"
+    const val transactionId1 = "transactionEditId1"
+    //const val transactionId2 = "transactionEditId2"
+    override val route = "$routeWithoutArgs/{$transactionId1}"
 }
 
 @Composable
@@ -22,7 +23,7 @@ fun TransactionEditScreen(
 ){
     val accounts by viewModel.accountsState.collectAsState()
     val categories by viewModel.categoriesState.collectAsState()
-
+    println(viewModel.transactionUiState.transactionDetails)
     TransactionEntryBody(
         modifier = Modifier,
         transactionUiState = viewModel.transactionUiState,

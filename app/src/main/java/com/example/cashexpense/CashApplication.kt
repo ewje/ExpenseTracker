@@ -1,8 +1,15 @@
 package com.example.cashexpense
 
 import android.app.Application
+import android.content.Context
+import androidx.compose.ui.graphics.Color
 import com.example.cashexpense.data.AppContainer
+import com.example.cashexpense.data.AppDatabase
+import com.example.cashexpense.data.Category
 import com.example.cashexpense.data.DefaultAppContainer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class CashApplication: Application() {
     lateinit var container: AppContainer
@@ -10,5 +17,27 @@ class CashApplication: Application() {
     override fun onCreate() {
         super.onCreate()
         container = DefaultAppContainer(this)
+
+        if (isFirstLaunch(this)) {
+            CoroutineScope(Dispatchers.IO).launch {
+                val db = AppDatabase.getDatabase(this@CashApplication)
+
+                db.categoryDao().insertCategory(
+                    Category(categoryName = "Transfer", color = 0xFF939393, id = 100001)
+                )
+            }
+
+            setFirstLaunchDone(this@CashApplication)
+        }
     }
+}
+
+fun isFirstLaunch(context: Context): Boolean {
+    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    return prefs.getBoolean("is_first_launch", true)
+}
+
+fun setFirstLaunchDone(context: Context) {
+    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    prefs.edit().putBoolean("is_first_launch", false).apply()
 }

@@ -118,7 +118,6 @@ private fun HomeBody(
 ) {
     var selectedAcc: Account? = accounts.firstOrNull()
     val sortedTransactions = transactions.groupByDay()
-    println("selected account = ${viewModel.homeUiState.selectedAccount}")
 
     LaunchedEffect(accounts) {
         if(accounts.isNotEmpty()){
@@ -562,8 +561,6 @@ private fun AmountCard(
     income: Double,
     expense: Double
 ) {
-
-    //key(selectedAccount) {
         val openDialog = remember() { mutableStateOf(false) }
         Card(
             modifier = modifier.fillMaxWidth().clickable {
@@ -667,7 +664,21 @@ fun TransactionItem(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(dimensionResource(id = R.dimen.padding_small))
-                    .clickable { onClick(transaction.transaction.id) },
+                    .clickable {
+                        /*
+                        if(transaction.transaction.type == TransactionType.INCOME || transaction.transaction.type == TransactionType.EXPENSE) {
+                            onClick(transaction.transaction.id, 0)
+                        } else {
+                            onClick(
+                                transaction.transaction.id,
+                                transactions.transactions.find {
+                                    (it.transaction.transAmount == transaction.transaction.transAmount) && (it.transaction.details == transaction.transaction.details)
+                                }?.transaction?.id ?: 0)
+                        }
+
+                         */
+                        onClick(transaction.transaction.id)
+                    },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ){
@@ -707,12 +718,14 @@ fun TransactionItem(
                     style = MaterialTheme.typography.titleLarge,
                     color = if (transaction.transaction.type == TransactionType.EXPENSE) {
                         colorResource(R.color.expense)
-                    } else {
+                    } else if (transaction.transaction.type == TransactionType.INCOME){
                         colorResource(R.color.income)
+                    } else if (transaction.transaction.type == TransactionType.TRANSFER) {
+                        colorResource(R.color.transferOut)
+                    } else {
+                        colorResource(R.color.transferIn)
                     }
-
                 )
-
             }
         }
     }
@@ -720,7 +733,7 @@ fun TransactionItem(
 }
 
 
-
+/*
 @Preview(showBackground = true)
 @Composable
 private fun HomeBodyPreview() {
@@ -739,3 +752,5 @@ private fun HomeBodyPreview() {
        onClick = {}
    )
 }
+
+ */

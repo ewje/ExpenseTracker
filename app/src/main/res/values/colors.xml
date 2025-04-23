@@ -7,6 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="income">#FF3EC738</color>
-    <color name="expense">#FFC23C3C</color>
+    <color name="income">#58BD52</color>
+    <color name="expense">#CA5959</color>
+    <color name="transferOut">#7E4949</color>
+    <color name="transferIn">#5B874B</color>
 </resources>

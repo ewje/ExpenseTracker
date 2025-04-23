@@ -86,9 +86,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(
                             route = TransactionDetailsDestination.route,
-                            arguments = listOf(navArgument(TransactionDetailsDestination.transactionIdArg) {
-                                type = NavType.IntType
-                            })
+                            arguments = listOf(
+                                navArgument(TransactionDetailsDestination.transactionId1) {
+                                    type = NavType.IntType
+                                }
+                            )
                         ){
                             TransactionDetailsScreen(
                                 navigateBack = { navController.navigate(HomeDestination.route) },
@@ -99,9 +101,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable(
                             route = TransactionEditDestination.route,
-                            arguments = listOf(navArgument(TransactionEditDestination.transactionIdArg) {
-                                type = NavType.IntType
-                            })
+                            arguments = listOf(
+                                navArgument(TransactionEditDestination.transactionId1) {
+                                    type = NavType.IntType
+                                }
+                            )
                         ){
                             TransactionEditScreen(
                                 navigateBack = { navController.navigate(HomeDestination.route) }

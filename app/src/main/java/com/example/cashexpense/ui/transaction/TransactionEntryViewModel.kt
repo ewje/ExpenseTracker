@@ -40,21 +40,36 @@ class TransactionEntryViewModel(
     fun saveTransaction() {
         if (validateInput()) {
             viewModelScope.launch {
-                repository.insertTransaction(transactionUiState.transactionDetails.toTransaction())
-                editAccountValue()
+                if(transactionUiState.transactionDetails.type != TransactionType.TRANSFER) {
+                    repository.insertTransaction(transactionUiState.transactionDetails.toTransaction())
+                    editAccountValue()
+                } else if (transactionUiState.transactionDetails.type == TransactionType.TRANSFER) {
+                    val transferOut = transactionUiState.transactionDetails.toTransfer()
+                    val transferIn = transactionUiState.transactionDetails.toTransferIn(accounts = accountsState.value)
+                    repository.insertTransaction(transferIn)
+                    repository.insertTransaction(transferOut)
+                    editAccountValue()
+                }
             }
         }
     }
 
     private fun validateInput(uiState: TransactionDetails = transactionUiState.transactionDetails): Boolean {
-        return with(uiState) {
-            title.isNotBlank() && (amount.isNotBlank()) && account.isNotBlank() && category.isNotBlank()
+        if(uiState.type == TransactionType.TRANSFER){
+            return with(uiState) {
+                amount.isNotBlank() && account.isNotBlank() && destinationAccount.isNotBlank()
+            }
+        } else {
+            return with(uiState) {
+                title.isNotBlank() && (amount.isNotBlank()) && account.isNotBlank() && category.isNotBlank()
+            }
         }
     }
 
     private fun editAccountValue() {
         val accounts = accountsState.value
         var account = accounts.find { it.accountName.trim() == transactionUiState.transactionDetails.account.trim() }
+        var destinationAccount = accounts.find { it.accountName.trim() == transactionUiState.transactionDetails.destinationAccount.trim() }
         if (account != null) {
             when (transactionUiState.transactionDetails.type) {
                 TransactionType.EXPENSE -> {
@@ -62,7 +77,6 @@ class TransactionEntryViewModel(
                         accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces()).toTwoDecimalPlaces(),
                         //expense = (account.expense + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
                         )
-                    println(account.accAmount)
                 }
                 TransactionType.INCOME -> {
                     account = account.copy(
@@ -74,10 +88,21 @@ class TransactionEntryViewModel(
                     account = account.copy(
                         accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
                     )
+                    if(destinationAccount != null) {
+                        destinationAccount = destinationAccount.copy(
+                            accAmount = (destinationAccount.accAmount + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
+                        )
+                    }
+                }
+                TransactionType.TRANSFERIN -> {
+
                 }
             }
             viewModelScope.launch {
                 repository.updateAccount(account)
+                if(transactionUiState.transactionDetails.type == TransactionType.TRANSFER && destinationAccount != null) {
+                    repository.updateAccount(destinationAccount)
+                }
             }
         }
     }
@@ -98,7 +123,8 @@ data class TransactionDetails(
     val category: String = "",
     val account: String = "",
     val categoryId: Int = 0,
-    val accountId: Int = 0
+    val accountId: Int = 0,
+    val destinationAccount: String = ""
 )
 
 data class AccountDetails(
@@ -120,7 +146,8 @@ data class CategoryDetails(
 enum class TransactionType(val label: String) {
     INCOME("Income"),
     EXPENSE("Expense"),
-    TRANSFER("Transfer")
+    TRANSFER("Outgoing Transfer"),
+    TRANSFERIN("Incoming Transfer")
 }
 
 fun Transaction.toTransactionDetails(): TransactionDetails = TransactionDetails(
@@ -157,6 +184,31 @@ fun Category.toCategoryDetails(): CategoryDetails = CategoryDetails(
     name = categoryName,
     color = color
 )
+
+fun TransactionDetails.toTransfer(): Transaction {
+    return Transaction(
+        id = id,
+        title = "$account Transfer Out",
+        transAmount = amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces(),
+        date = date,
+        details = "Transferred Balance: $account to $destinationAccount",
+        type = type,
+        accountIdFk = accountId,
+        categoryIdFk = 100001
+    )
+}
+
+fun TransactionDetails.toTransferIn(accounts: List<Account>): Transaction {
+    return Transaction(
+        title = "$destinationAccount Transfer In",
+        transAmount = amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces(),
+        date = date,
+        details = "Transferred Balance: $account to $destinationAccount",
+        type = TransactionType.TRANSFERIN,
+        accountIdFk = accounts.find {it.accountName == destinationAccount}?.id?:0,
+        categoryIdFk = 100001
+    )
+}
 
 fun TransactionDetails.toTransaction(): Transaction {
     return Transaction(

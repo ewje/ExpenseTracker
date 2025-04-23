@@ -36,14 +36,16 @@ import com.example.cashexpense.ui.AppViewModelProvider
 import com.example.cashexpense.ui.settings.CategoryDetails
 import com.example.cashexpense.ui.transaction.AccountDetails
 import com.example.cashexpense.ui.transaction.TransactionDetails
+import com.example.cashexpense.ui.transaction.TransactionType
 import java.time.Instant
 import java.time.ZoneId
 
 object TransactionDetailsDestination: NavDestination {
     const val routeWithoutArgs = "transaction_details"
     override val title = "Transaction Details"
-    const val transactionIdArg = "transactionId"
-    override val route = "$routeWithoutArgs/{$transactionIdArg}"
+    const val transactionId1 = "transactionId1"
+    //const val transactionId2 = "transactionId2"
+    override val route = "$routeWithoutArgs/{$transactionId1}"
 }
 
 
@@ -61,7 +63,8 @@ fun TransactionDetailsScreen(
             viewModel.deleteTransaction()
             navigateBack()
         },
-        navigateToTransactionEdit = navigateToTransactionEdit
+        navigateToTransactionEdit = navigateToTransactionEdit,
+        viewModel = viewModel
     )
 
 }
@@ -71,7 +74,8 @@ fun TransactionDetailsBody(
     modifier: Modifier,
     transactionDetailsUiState: TransactionDetailsUiState,
     onDelete: () -> Unit,
-    navigateToTransactionEdit: (Int) -> Unit
+    navigateToTransactionEdit: (Int) -> Unit,
+    viewModel: TransactionDetailsViewModel
 ) {
     Column(
         modifier = modifier.padding(dimensionResource(R.dimen.padding_medium)),
@@ -86,12 +90,32 @@ fun TransactionDetailsBody(
         Row(
             horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
         ) {
-            Button(
-                onClick = {navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id)},
-                modifier = Modifier.weight(0.3f)
-            ) {
-                Text("Edit")
+            if(transactionDetailsUiState.transactionDetails.type != TransactionType.TRANSFERIN){
+                Button(
+                    onClick = {
+                        /*
+                        if(transactionDetailsUiState.transactionDetails.type == TransactionType.INCOME || transactionDetailsUiState.transactionDetails.type == TransactionType.EXPENSE) {
+                            navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id, 0)
+                        } else {
+                            navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id, viewModel.transactionId2)
+                        }
+
+                         */
+                        navigateToTransactionEdit(transactionDetailsUiState.transactionDetails.id)
+                    },
+                    modifier = Modifier.weight(0.3f)
+                ) {
+                    Text("Edit")
+                }
+            } else {
+                Button(
+                    onClick = {},
+                    enabled = false
+                ) {
+                    Text("Edit the original")
+                }
             }
+
             OutlinedButton(
                 onClick = onDelete,
                 modifier = Modifier.weight(0.3f)

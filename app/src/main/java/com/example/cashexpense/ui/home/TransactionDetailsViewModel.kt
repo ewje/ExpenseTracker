@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cashexpense.data.AppRepository
+import com.example.cashexpense.data.Transaction
 import com.example.cashexpense.ui.settings.CategoryDetails
 import com.example.cashexpense.ui.transaction.AccountDetails
 import com.example.cashexpense.ui.transaction.TransactionDetails
@@ -25,10 +26,10 @@ class TransactionDetailsViewModel(
     savedStateHandle: SavedStateHandle,
     private val repository: AppRepository
 ): ViewModel() {
-    private val transactionId: Int = checkNotNull(savedStateHandle[TransactionDetailsDestination.transactionIdArg])
-
+    private val transactionId1: Int = checkNotNull(savedStateHandle[TransactionDetailsDestination.transactionId1])
+    //val transactionId2: Int = checkNotNull(savedStateHandle[TransactionDetailsDestination.transactionId2])
     val uiState: StateFlow<TransactionDetailsUiState> =
-        repository.getTransactionWithAccountAndCategory(transactionId)
+        repository.getTransactionWithAccountAndCategory(transactionId1)
             .filterNotNull()
             .map{
                 TransactionDetailsUiState(
@@ -42,7 +43,6 @@ class TransactionDetailsViewModel(
             )
     fun deleteTransaction() {
         viewModelScope.launch {
-            println("DELETE")
             repository.deleteTransaction(uiState.value.transactionDetails.toTransaction())
             editAccountValue()
         }
@@ -64,7 +64,12 @@ class TransactionDetailsViewModel(
             }
             TransactionType.TRANSFER -> {
                 account = account.copy(
-                    amount = (account.amount + uiState.value.transactionDetails.amount.toDoubleWithTwoDecimalPlaces())
+                    amount = (account.amount.toDoubleWithTwoDecimalPlaces() + uiState.value.transactionDetails.amount.toDoubleWithTwoDecimalPlaces()).toString()
+                )
+            }
+            TransactionType.TRANSFERIN -> {
+                account = account.copy(
+                    amount = (account.amount.toDoubleWithTwoDecimalPlaces() - uiState.value.transactionDetails.amount.toDoubleWithTwoDecimalPlaces()).toString()
                 )
             }
         }

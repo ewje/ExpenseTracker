@@ -187,7 +187,7 @@ fun CategoryPieChart(
             Row(modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween) {
                 Column {
-                    categories.forEach { category ->
+                    categories.filter {it.id != 100001}.forEach { category ->
                         CategoryItem(category)
                     }
                 }

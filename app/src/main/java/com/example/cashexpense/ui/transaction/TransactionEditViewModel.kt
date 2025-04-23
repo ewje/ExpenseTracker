@@ -34,13 +34,13 @@ class TransactionEditViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     val accountsState: StateFlow<List<Account>> = _accountsState
 
-    private val transactionId: Int = checkNotNull(savedStateHandle[TransactionEditDestination.transactionIdArg])
+    private val transactionId1: Int = checkNotNull(savedStateHandle[TransactionEditDestination.transactionId1])
 
     //val initialTransaction: TransactionDetails = repository.getTransactionStream(transactionId).filterNotNull().first().toTransactionDetails()
 
     init {
         viewModelScope.launch {
-            var transaction = repository.getTransactionStream(transactionId).filterNotNull().first().toTransactionDetails()
+            var transaction = repository.getTransactionStream(transactionId1).filterNotNull().first().toTransactionDetails()
             transaction = transaction.copy(
                 account = accountsState.value.find { it.id == transaction.accountId }?.accountName ?: "",
                 category = categoriesState.value.find { it.id == transaction.categoryId }?.categoryName ?: "",
@@ -64,7 +64,10 @@ class TransactionEditViewModel(
     fun saveTransaction() {
         if (validateInput()) {
             viewModelScope.launch {
-                repository.updateTransaction(transactionUiState.transactionDetails.toTransaction())
+                if(transactionUiState.transactionDetails.type != TransactionType.TRANSFER) {
+                    repository.updateTransaction(transactionUiState.transactionDetails.toTransaction())
+
+                }
                 editAccountValue()
             }
         }
@@ -132,6 +135,10 @@ class TransactionEditViewModel(
                         )
                         same = false
                     }
+                }
+
+                TransactionType.TRANSFERIN -> {
+                    same = true
                 }
             }
             viewModelScope.launch {

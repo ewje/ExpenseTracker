@@ -106,7 +106,7 @@ fun List<TransactionsWithAccountAndCategory>.groupByMonth(): Map<YearMonth, Mont
 
         if (transaction.transaction.type == TransactionType.INCOME) {
             monthData.income += amount
-        } else {
+        } else if (transaction.transaction.type == TransactionType.EXPENSE){
             monthData.expense += amount
         }
     }
