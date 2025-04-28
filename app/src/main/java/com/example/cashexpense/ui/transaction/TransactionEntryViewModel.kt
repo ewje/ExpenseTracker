@@ -54,6 +54,10 @@ class TransactionEntryViewModel(
         }
     }
 
+    fun isButtonEnabled(): Boolean {
+        return validateInput()
+    }
+
     private fun validateInput(uiState: TransactionDetails = transactionUiState.transactionDetails): Boolean {
         if(uiState.type == TransactionType.TRANSFER){
             return with(uiState) {

@@ -1,5 +1,8 @@
 package com.example.cashexpense.ui.reports
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,11 +17,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,7 +53,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
@@ -118,7 +130,11 @@ fun ReportsBody(
     val transactionsByType = transactions.groupBy { it.transaction.type }
     Column(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
-        modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)).verticalScroll(rememberScrollState())
+        modifier = Modifier.padding(
+            start = dimensionResource(R.dimen.padding_medium),
+            end = dimensionResource(R.dimen.padding_medium),
+            top = dimensionResource(R.dimen.padding_medium)
+        ).verticalScroll(rememberScrollState())
     ) {
         if(accounts.isNotEmpty()) {
             LazyRow(
@@ -134,7 +150,11 @@ fun ReportsBody(
                 }
             }
         } else {
-            Card{
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+                )
+            ){
                 Text(
                     text = "Add an Account in the Home Screen!",
                     style = MaterialTheme.typography.headlineLarge,
@@ -148,17 +168,25 @@ fun ReportsBody(
                 transactionsByType = transactionsByType,
                 categories = category,
                 selectedCategory = uiState.selectedCategory,
-                onSliceClick = viewModel::updateSelectedCategory
+                onSliceClick = viewModel::updateSelectedCategory,
+                viewModel,
+                uiState = uiState
             )
             MonthlyBarChart(
                 selectedYearMonth = uiState.selectedYearMonth,
                 listData = transactions.groupByMonth(),
                 onClick = viewModel::updateSelectedMonth,
                 categories = category,
-                navigateToTransactionDetails =navigateToTransactionDetails
+                navigateToTransactionDetails =navigateToTransactionDetails,
+                uiState = uiState
             )
+            Spacer(Modifier.height(dimensionResource(R.dimen.padding_medium)))
         } else {
-            Card{
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+                )
+            ){
                 Text(
                     text = "Add some Transactions!",
                     style = MaterialTheme.typography.headlineLarge,
@@ -175,60 +203,109 @@ fun CategoryPieChart(
     transactionsByType: Map<TransactionType, List<TransactionsWithAccountAndCategory>>,
     categories: List<Category>,
     selectedCategory: Category?,
-    onSliceClick: (Category?) -> Unit
+    onSliceClick: (Category?) -> Unit,
+    viewModel: ReportScreenViewModel,
+    uiState: ReportsUiState
 ) {
     val expenseByCategory: Map<Category, List<TransactionsWithAccountAndCategory>> = transactionsByType[TransactionType.EXPENSE]?.groupBy { it.category } ?: emptyMap()
     val incomeByCategory: Map<Category, List<TransactionsWithAccountAndCategory>> = transactionsByType[TransactionType.INCOME]?.groupBy { it.category } ?: emptyMap()
     val expensePieData: List<PieData> = expenseByCategory.toPieDataList()
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.padding_medium)),
-            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
+    val incomePieData: List<PieData> = incomeByCategory.toPieDataList()
+    val pagerState = rememberPagerState { 2 }
+
+    LaunchedEffect(pagerState.currentPage) {
+        viewModel.updateSelectedCategory(null)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+        )
+    ) {
+        HorizontalPager(pagerState) {
+            when(it) {
+                0 -> PieChartCard(pieData = expensePieData, onSliceClick = onSliceClick, categories = categories, selectedCategory = selectedCategory, type = "Expenses:")
+                1 -> PieChartCard(pieData = incomePieData, onSliceClick = onSliceClick, categories, selectedCategory, type = "Income:")
+            }
+        }
+        Row(
+            Modifier
+                .height(20.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Row(modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    categories.filter {it.id != 100001}.forEach { category ->
-                        CategoryItem(category)
-                    }
-                }
-                PieChart(
-                    originalExpenses = expensePieData,
-                    totalExpense = expensePieData.sumOf { it.amount },
-                    onSliceClick = {pieData ->
-                        onSliceClick(categories.find {pieData.name == it.categoryName})
-                    },
-                    selectedCategory = selectedCategory
+            repeat(2) { iteration ->
+                val color = if (pagerState.currentPage == iteration) Color.Gray else Color.LightGray
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .background(color, CircleShape)
+                        .size(10.dp)
                 )
             }
-            if (selectedCategory != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clip(CircleShape)
-                                .background(Color(selectedCategory.color))
-                        )
-                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                        Text(
-                            text = selectedCategory.categoryName,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        val amount: Double = expensePieData.find { it.name == selectedCategory.categoryName }?.amount ?: 0.0
-                        val percent: Int = ((amount / expensePieData.sumOf { it.amount }) * 100.0).roundToInt()
-                        Text(
-                            text = "$${amount}",
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(text = "$percent%")
-                    }
+        }
+    }
+}
+
+@Composable
+private fun PieChartCard(
+    pieData: List<PieData>,
+    onSliceClick: (Category?) -> Unit,
+    categories: List<Category>,
+    selectedCategory: Category?,
+    type: String
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.padding_medium)),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
+    ) {
+        Row(modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween) {
+            Column {
+                pieData.forEach { category ->
+                    CategoryItem(category)
+                }
+            }
+            PieChart(
+                originalExpenses = pieData,
+                totalExpense = pieData.sumOf { it.amount },
+                onSliceClick = {pieData ->
+                    onSliceClick(categories.find {pieData.name == it.categoryName})
+                },
+                selectedCategory = selectedCategory,
+                type = type
+            )
+        }
+        if (selectedCategory != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .background(Color(selectedCategory.color))
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(
+                        text = selectedCategory.categoryName,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    val amount: Double = pieData.find { it.name == selectedCategory.categoryName }?.amount ?: 0.0
+                    val total = pieData.sumOf { it.amount }
+                    val percent: Int = if (total != 0.0) ((amount / total) * 100.0).roundToInt() else 0
+                    Text(
+                        text = "$${amount}",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(text = "$percent%")
                 }
             }
         }
@@ -236,14 +313,8 @@ fun CategoryPieChart(
 
 }
 
-data class PieData(
-    val name: String,
-    val color: Long,
-    val amount: Double
-)
-
 @Composable
-private fun CategoryItem(category: Category) {
+private fun CategoryItem(category: PieData) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
@@ -254,13 +325,20 @@ private fun CategoryItem(category: Category) {
         )
         Spacer(modifier = Modifier.padding(horizontal = 4.dp))
         Text(
-            text = category.categoryName
+            text = category.name,
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }
 
 @Composable
-private fun PieChart(originalExpenses: List<PieData>, totalExpense: Double, onSliceClick: (PieData) -> Unit, selectedCategory: Category?) {
+private fun PieChart(
+    originalExpenses: List<PieData>,
+    totalExpense: Double,
+    onSliceClick: (PieData) -> Unit,
+    selectedCategory: Category?,
+    type: String
+) {
 
     // Make sure expenses are updated when originalExpenses change
     var expenses by remember { mutableStateOf(originalExpenses) }
@@ -272,7 +350,7 @@ private fun PieChart(originalExpenses: List<PieData>, totalExpense: Double, onSl
     val sweepAngles = expenses.map { ((it.amount / totalExpense) * 360).toFloat() }
     var startAngle = -90f
     Box(
-        contentAlignment = Alignment.Center, modifier = Modifier.padding()
+        contentAlignment = Alignment.Center, modifier = Modifier.padding(end = dimensionResource(R.dimen.padding_small))
             .size(200.dp)
     ) {
         val gapAngle = if(expenses.size > 1) {
@@ -294,10 +372,7 @@ private fun PieChart(originalExpenses: List<PieData>, totalExpense: Double, onSl
                             if (it < -90f) it + 360f else it
                         }
                         // Only continue if the touch is within the pie circle
-                        if (distance <= min(
-                                size.width,
-                                size.height
-                            ) / 2 && distance >= min(size.width - 130, size.height - 130) / 2
+                        if (distance <= min(size.width+50, size.height+50) / 2 && distance >= min(size.width - 130, size.height - 130) / 2
                         ) {
                             var start = -90f
                             println(touchAngle)
@@ -334,7 +409,7 @@ private fun PieChart(originalExpenses: List<PieData>, totalExpense: Double, onSl
             }
         }
         Column {
-            Text(text = "Expenses:")
+            Text(text = type)
             Text(
                 text = "$${totalExpense}",
                 style = MaterialTheme.typography.headlineMedium,
@@ -351,11 +426,20 @@ fun MonthlyBarChart(
     listData: Map<YearMonth, MonthTransactions>,
     onClick: (YearMonth) -> Unit,
     navigateToTransactionDetails: (Int, Int) -> Unit,
-    categories: List<Category>
+    categories: List<Category>,
+    uiState: ReportsUiState
 ) {
-    Card(modifier = Modifier)  {
+    Card(
+        modifier = Modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+        )
+    )  {
         Column(
-            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))
+            modifier = Modifier.padding(
+                start = dimensionResource(R.dimen.padding_medium),
+                end = dimensionResource(R.dimen.padding_medium),
+                top = dimensionResource(R.dimen.padding_medium))
         ) {
             BarChart(selectedYearMonth = selectedYearMonth, listData, onClick = onClick)
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
@@ -375,7 +459,6 @@ fun MonthlyBarChart(
                         categories = categories,
                         onClick = navigateToTransactionDetails
                     )
-
                 }
             }
         }

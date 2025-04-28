@@ -1,14 +1,24 @@
 package com.example.cashexpense
 
+import android.graphics.Outline
+import android.graphics.drawable.shapes.Shape
 import android.os.Bundle
+import android.util.LayoutDirection
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,8 +29,17 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,6 +53,8 @@ import com.example.cashexpense.ui.home.TransactionDetailsDestination
 import com.example.cashexpense.ui.home.TransactionDetailsScreen
 import com.example.cashexpense.ui.reports.ReportDestination
 import com.example.cashexpense.ui.reports.ReportsScreen
+import com.example.cashexpense.ui.reports.TransactionsDestination
+import com.example.cashexpense.ui.reports.TransactionsScreen
 import com.example.cashexpense.ui.settings.CategoriesDestination
 import com.example.cashexpense.ui.settings.CategoriesScreen
 import com.example.cashexpense.ui.settings.SettingsDestination
@@ -43,6 +64,7 @@ import com.example.cashexpense.ui.transaction.TransactionEditDestination
 import com.example.cashexpense.ui.transaction.TransactionEditScreen
 import com.example.cashexpense.ui.transaction.TransactionEntryDestination
 import com.example.cashexpense.ui.transaction.TransactionEntryScreen
+import kotlin.io.path.Path
 
 
 class MainActivity : ComponentActivity() {
@@ -149,6 +171,19 @@ class MainActivity : ComponentActivity() {
                         composable(route = CategoriesDestination.route) {
                             CategoriesScreen()
                         }
+                        composable(route = TransactionsDestination.route) {
+                            TransactionsScreen(navigateToTransactionDetails = { id1, id2 ->
+                                val base = TransactionDetailsDestination.routeWithoutArgs
+                                val route = if (id2 != -1) {
+                                    "$base/$id1?${
+                                        TransactionDetailsDestination.transactionId2
+                                    }=$id2"
+                                } else {
+                                    "$base/$id1"
+                                }
+                                navController.navigate(route)
+                            })
+                        }
                     }
                 }
             }
@@ -165,7 +200,8 @@ val bottomNavDestination = listOf(
     HomeDestination,
     TransactionEntryDestination,
     SettingsDestination,
-    ReportDestination
+    ReportDestination,
+    TransactionsDestination
 )
 val allDestinations = listOf(
     HomeDestination,
@@ -174,7 +210,8 @@ val allDestinations = listOf(
     TransactionEditDestination,
     SettingsDestination,
     CategoriesDestination,
-    ReportDestination
+    ReportDestination,
+    TransactionsDestination
 )
 
 @Composable
@@ -182,84 +219,106 @@ fun NavigationBar(
     currentRoute: String?,
     navController: NavHostController
 ) {
-    NavigationBar {
-        NavigationBarItem(
-            selected = currentRoute == HomeDestination.route,
-            onClick = {
-                if (currentRoute != HomeDestination.route) {
-                    navController.navigate(HomeDestination.route)
+    Box(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        NavigationBar {
+            NavigationBarItem(
+                selected = currentRoute == HomeDestination.route,
+                onClick = {
+                    if (currentRoute != HomeDestination.route) {
+                        navController.navigate(HomeDestination.route)
+                    }
+                },
+                label = {
+                    Text(text = HomeDestination.title)
+                },
+                icon = {
+                    Icon(
+                        imageVector = if(currentRoute == HomeDestination.route) {
+                            HomeDestination.selectedIcon
+                        } else HomeDestination.unselectedIcon,
+                        contentDescription = HomeDestination.title
+                    )
                 }
-            },
-            label = {
-                Text(text = HomeDestination.title)
-            },
-            icon = {
-                Icon(
-                    imageVector = if(currentRoute == HomeDestination.route) {
-                        HomeDestination.selectedIcon
-                    } else HomeDestination.unselectedIcon,
-                    contentDescription = HomeDestination.title
-                )
-            }
-        )
-        NavigationBarItem(
-            selected = currentRoute == ReportDestination.route,
-            onClick = {
-                if (currentRoute != ReportDestination.route) {
-                    navController.navigate(ReportDestination.route)
+            )
+            NavigationBarItem(
+                selected = currentRoute == ReportDestination.route,
+                onClick = {
+                    if (currentRoute != ReportDestination.route) {
+                        navController.navigate(ReportDestination.route)
+                    }
+                },
+                label = {
+                    Text(text = ReportDestination.title)
+                },
+                icon = {
+                    Icon(
+                        imageVector = if(currentRoute == ReportDestination.route) {
+                            ReportDestination.selectedIcon
+                        } else ReportDestination.unselectedIcon,
+                        contentDescription = ReportDestination.title
+                    )
                 }
-            },
-            label = {
-                Text(text = ReportDestination.title)
-            },
-            icon = {
-                Icon(
-                    imageVector = if(currentRoute == ReportDestination.route) {
-                        ReportDestination.selectedIcon
-                    } else ReportDestination.unselectedIcon,
-                    contentDescription = ReportDestination.title
-                )
-            }
-        )
-        NavigationBarItem(
-            selected = currentRoute == TransactionEntryDestination.route,
+            )
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+            NavigationBarItem(
+                selected = currentRoute == TransactionsDestination.route,
+                onClick = {
+                    if (currentRoute != TransactionsDestination.route) {
+                        navController.navigate(TransactionsDestination.route)
+                    }
+                },
+                label = {
+                    Text(text = TransactionEntryDestination.navTitle)
+                },
+                icon = {
+                    Icon(
+                        imageVector = if(currentRoute == TransactionEntryDestination.route) {
+                            TransactionEntryDestination.selectedIcon
+                        } else TransactionEntryDestination.unselectedIcon,
+                        contentDescription = TransactionEntryDestination.title
+                    )
+                }
+            )
+            NavigationBarItem(
+                selected = currentRoute == SettingsDestination.route,
+                onClick = {
+                    if (currentRoute != SettingsDestination.route) {
+                        navController.navigate(SettingsDestination.route)
+                    }
+                },
+                label = {
+                    Text(text = SettingsDestination.title)
+                },
+                icon = {
+                    Icon(
+                        imageVector = if(currentRoute == SettingsDestination.route) {
+                            SettingsDestination.selectedIcon
+                        } else SettingsDestination.unselectedIcon,
+                        contentDescription = SettingsDestination.title
+                    )
+                }
+            )
+        }
+        FloatingActionButton(
             onClick = {
                 if (currentRoute != TransactionEntryDestination.route) {
                     navController.navigate(TransactionEntryDestination.route)
                 }
             },
-            label = {
-                Text(text = TransactionEntryDestination.navTitle)
-            },
-            icon = {
-                Icon(
-                    imageVector = if(currentRoute == TransactionEntryDestination.route) {
-                        TransactionEntryDestination.selectedIcon
-                    } else TransactionEntryDestination.unselectedIcon,
-                    contentDescription = TransactionEntryDestination.title
-                )
-            }
-        )
-        NavigationBarItem(
-            selected = currentRoute == SettingsDestination.route,
-            onClick = {
-                if (currentRoute != SettingsDestination.route) {
-                    navController.navigate(SettingsDestination.route)
-                }
-            },
-            label = {
-                Text(text = SettingsDestination.title)
-            },
-            icon = {
-                Icon(
-                    imageVector = if(currentRoute == SettingsDestination.route) {
-                        SettingsDestination.selectedIcon
-                    } else SettingsDestination.unselectedIcon,
-                    contentDescription = SettingsDestination.title
-                )
-            }
-        )
+            shape = CircleShape,
+            modifier = Modifier.offset(y = (-8).dp).align(Alignment.BottomCenter).padding(bottom = 56.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = "add transaction"
+            )
+        }
     }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -301,3 +360,4 @@ fun GreetingPreview() {
         Greeting("hello")
     }
 }
+

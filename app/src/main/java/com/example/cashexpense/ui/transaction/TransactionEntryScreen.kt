@@ -104,7 +104,9 @@ fun TransactionEntryScreen(
         },
         categories = categories,
         accounts = accounts,
-        buttonText = "Add Transaction"
+        buttonText = "Add Transaction",
+        isButtonEnabled = viewModel.isButtonEnabled(),
+        isEdit = false
     )
 }
 
@@ -116,7 +118,9 @@ fun TransactionEntryBody(
     onSaveClick: () -> Unit,
     categories: List<Category>,
     accounts: List<Account>,
-    buttonText: String
+    buttonText: String,
+    isButtonEnabled: Boolean,
+    isEdit: Boolean
 ) {
     Column(
         modifier
@@ -127,8 +131,10 @@ fun TransactionEntryBody(
     ) {
         TransactionTypeButtons(
             transactionUiState.transactionDetails,
-            onValueChange = onTransactionValueChange
+            onValueChange = onTransactionValueChange,
+            isEdit = isEdit
         )
+
         AmountCard(
             transactionUiState.transactionDetails,
             onValueChange = onTransactionValueChange
@@ -162,9 +168,12 @@ fun TransactionEntryBody(
                 isDestination = true
             )
         }
-        Button(onClick = {
-            onSaveClick()
-        }) {
+        Button(
+            onClick = {
+                onSaveClick()
+            },
+            enabled = isButtonEnabled
+        ) {
             Text(buttonText)
         }
     }
@@ -245,17 +254,27 @@ private fun Accounts(
 private fun TransactionTypeButtons(
     transactionDetails: TransactionDetails,
     onValueChange: (TransactionDetails) -> Unit = {},
+    isEdit: Boolean
 ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            val type = listOf(
-                TransactionType.EXPENSE,
-                TransactionType.INCOME,
-                TransactionType.TRANSFER,
-            )
-            type.forEachIndexed { index, item ->
+            var type = emptyList<TransactionType>()
+            if(!isEdit) {
+                type = listOf(
+                    TransactionType.EXPENSE,
+                    TransactionType.INCOME,
+                    TransactionType.TRANSFER
+                )
+            } else if (isEdit && transactionDetails.type != TransactionType.TRANSFER) {
+                type = listOf(
+                    TransactionType.EXPENSE,
+                    TransactionType.INCOME
+                )
+            }
+
+            type.forEach { item ->
                 FilledTonalButton(
                     onClick = {
                         onValueChange(transactionDetails.copy(type = item))

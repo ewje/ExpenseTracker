@@ -24,11 +24,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -118,22 +121,27 @@ private fun HomeBody(
 ) {
     var selectedAcc: Account? = accounts.firstOrNull()
     val sortedTransactions = transactions.groupByDay()
-
+/*
     LaunchedEffect(accounts) {
         if(accounts.isNotEmpty()){
-            viewModel.updateHomeUiState(accounts.first())
+            viewModel.updateHomeUiState(viewModel.homeUiState.selectedAccount ?: accounts.first())
         } else {
             viewModel.updateHomeUiState(null)
             selectedAcc = null
         }
     }
 
+ */
+
     val income = getIncome(transactions, viewModel.homeUiState.selectedAccount?:selectedAcc)
     val expense = getExpense(transactions, viewModel.homeUiState.selectedAccount?:selectedAcc)
 
     Column(
         verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
-        modifier = modifier.padding(dimensionResource(id = R.dimen.padding_medium))
+        modifier = modifier.padding(
+            start = dimensionResource(R.dimen.padding_medium),
+            end = dimensionResource(R.dimen.padding_medium),
+            top = dimensionResource(R.dimen.padding_medium))
     ) {
         LazyRow(
             modifier = Modifier,
@@ -167,6 +175,12 @@ private fun HomeBody(
             accountDetails = viewModel.accountUiState.accountDetails,
             deleteAccount = {account ->
                 viewModel.deleteAccount(account)
+                if(accounts.size == 1 || accounts.isEmpty()) {
+                    viewModel.updateHomeUiState(null)
+                } else {
+                    viewModel.updateHomeUiState(accounts.first())
+                }
+                viewModel.updateAccountUiState(AccountDetails())
             },
             income = income,
             expense = expense
@@ -205,16 +219,16 @@ fun AccountCard(
     onClick: (Account) -> Unit
 ) {
     OutlinedCard(
-        modifier = modifier.height(75.dp).clickable { onClick(account) },
+        modifier = modifier.height(75.dp).clip(RoundedCornerShape(12.dp)).clickable { onClick(account) },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.background//MaterialTheme.colorScheme.surfaceVariant
         ),
         border = BorderStroke(
             2.dp,
             color =  if(account == selectedAccount) {
                 Color(account.accountColor)
             } else {
-                MaterialTheme.colorScheme.surfaceVariant
+                Color(account.accountColor).copy(alpha = 0.3f)
             }
         )
     ) {
@@ -265,7 +279,7 @@ private fun AddAccount(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.background
         ),
-        border = BorderStroke(4.dp, MaterialTheme.colorScheme.surfaceVariant)
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)).fillMaxSize(),
@@ -478,42 +492,6 @@ fun EditAccount(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-/*
-                OutlinedTextField(
-                    value = accountDetails.income,
-                    onValueChange = {
-                        onEditAccountDetailsChange(accountDetails.copy(income = it))
-                    },
-                    label = { Text("Income") },
-                    colors = TextFieldDefaults.colors(
-                        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = accountDetails.expense,
-                    onValueChange = {
-                        onEditAccountDetailsChange(accountDetails.copy(expense = it))
-                    },
-                    label = { Text("Expense") },
-                    colors = TextFieldDefaults.colors(
-                        unfocusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                    ),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
- */
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     TextButton(
@@ -563,10 +541,13 @@ private fun AmountCard(
 ) {
         val openDialog = remember() { mutableStateOf(false) }
         Card(
-            modifier = modifier.fillMaxWidth().clickable {
+            modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable {
                 openDialog.value = true
                 onEditAccountDetailsChange(selectedAccount?.toAccountDetails() ?: AccountDetails())
-            }
+            },
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)//Color(selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.1f)
+            )
         ) {
             Column(
                 modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_medium))
@@ -653,11 +634,12 @@ fun TransactionItem(
             color = Color.DarkGray
         )
         HorizontalDivider(
-                thickness = 2.dp,
-        modifier = Modifier
-            .padding(top = 4.dp,
-                start = dimensionResource(R.dimen.padding_medium),
-                end = dimensionResource(R.dimen.padding_medium))
+            thickness = 1.dp,
+            modifier = Modifier
+                .padding(
+                    top = 4.dp,
+                    start = dimensionResource(R.dimen.padding_medium),
+                    end = dimensionResource(R.dimen.padding_medium))
         )
         transactions.transactions.forEach { transaction ->
             Row(
@@ -709,20 +691,38 @@ fun TransactionItem(
                         )
                     }
                 }
-                Text(
-                    text = "$${transaction.transaction.transAmount}",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = if (transaction.transaction.type == TransactionType.EXPENSE) {
-                        colorResource(R.color.expense)
-                    } else if (transaction.transaction.type == TransactionType.INCOME){
-                        colorResource(R.color.income)
-                    } else if (transaction.transaction.type == TransactionType.TRANSFER) {
-                        colorResource(R.color.transferOut)
-                    } else {
-                        colorResource(R.color.transferIn)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (transaction.transaction.type == TransactionType.EXPENSE) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropDown,
+                            contentDescription = "",
+                            tint = colorResource(R.color.expense)
+                        )
+                    } else if (transaction.transaction.type == TransactionType.INCOME) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropDown,
+                            contentDescription = "",
+                            tint = colorResource(R.color.income),
+                            modifier = Modifier.graphicsLayer { scaleY = -1f }
+                        )
                     }
-                )
+                    Text(
+                        text = "$${transaction.transaction.transAmount}",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = if (transaction.transaction.type == TransactionType.EXPENSE) {
+                            colorResource(R.color.expense)
+                        } else if (transaction.transaction.type == TransactionType.INCOME){
+                            colorResource(R.color.income)
+                        } else if (transaction.transaction.type == TransactionType.TRANSFER) {
+                            colorResource(R.color.transferOut)
+                        } else {
+                            colorResource(R.color.transferIn)
+                        }
+                    )
+                }
             }
         }
     }

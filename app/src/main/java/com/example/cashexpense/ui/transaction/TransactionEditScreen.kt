@@ -34,6 +34,8 @@ fun TransactionEditScreen(
         },
         categories = categories,
         accounts = accounts,
-        buttonText = "Save Transaction"
+        buttonText = "Save Transaction",
+        isButtonEnabled = viewModel.isButtonEnabled(),
+        isEdit = true
     )
 }

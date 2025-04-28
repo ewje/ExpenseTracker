@@ -74,3 +74,9 @@ fun Map<Category, List<TransactionsWithAccountAndCategory>>.toPieDataList(): Lis
         )
     }.filter { it.amount > 0 } // Optional: exclude categories with 0 amount
 }
+
+data class PieData(
+    val name: String,
+    val color: Long,
+    val amount: Double
+)

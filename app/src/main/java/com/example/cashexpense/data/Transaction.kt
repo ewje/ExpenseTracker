@@ -110,7 +110,6 @@ fun List<TransactionsWithAccountAndCategory>.groupByMonth(): Map<YearMonth, Mont
             monthData.expense += amount
         }
     }
-
     return dataMap.toSortedMap()
 }
 

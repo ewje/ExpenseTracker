@@ -67,9 +67,22 @@ class TransactionEditViewModel(
     }
 
     private fun validateInput(uiState: TransactionDetails = transactionUiState.transactionDetails): Boolean {
-        return with(uiState) {
-            title.isNotBlank() && (amount.isNotBlank()) && account.isNotBlank() && category.isNotBlank()
+        //return with(uiState) {
+        //title.isNotBlank() && (amount.isNotBlank()) && account.isNotBlank() && category.isNotBlank()
+        //}
+        if(uiState.type == TransactionType.TRANSFER){
+            return with(uiState) {
+                amount.isNotBlank() && account.isNotBlank() && destinationAccount.isNotBlank()
+            }
+        } else {
+            return with(uiState) {
+                title.isNotBlank() && (amount.isNotBlank()) && account.isNotBlank() && category.isNotBlank()
+            }
         }
+    }
+
+    fun isButtonEnabled(): Boolean {
+        return validateInput()
     }
 
     fun updateUiState(transactionDetails: TransactionDetails) {
@@ -116,6 +129,19 @@ class TransactionEditViewModel(
         if (account != null && initialAccount != null) {
             when (transactionUiState.transactionDetails.type) {
                 TransactionType.EXPENSE -> {
+                    if(initialTransaction.type == TransactionType.INCOME) {
+                        updatedAccounts[initialAccount.id] = updatedAccounts[initialAccount.id]?.let {
+                            it.copy(accAmount = it.accAmount - oldAmount)
+                        } ?: initialAccount.copy(accAmount = initialAccount.accAmount - oldAmount)
+                    } else {
+                        updatedAccounts[initialAccount.id] = updatedAccounts[initialAccount.id]?.let {
+                            it.copy(accAmount = it.accAmount + oldAmount)
+                        } ?: initialAccount.copy(accAmount = initialAccount.accAmount + oldAmount)
+                    }
+                    updatedAccounts[account.id] = updatedAccounts[account.id]?.let {
+                        it.copy(accAmount = it.accAmount - newAmount)
+                    } ?: account.copy(accAmount = account.accAmount - newAmount)
+                    /*
                     if (initialAccount == account) {
                         account = account.copy(
                             accAmount = (account.accAmount - newAmount + oldAmount).toTwoDecimalPlaces()
@@ -128,20 +154,22 @@ class TransactionEditViewModel(
 
                     updatedAccounts[account.id] = account
                     if (!same) updatedAccounts[initialAccount.id] = initialAccount
+
+                     */
                 }
                 TransactionType.INCOME -> {
-                    if (initialAccount == account) {
-                        account = account.copy(
-                            accAmount = (account.accAmount + newAmount - oldAmount).toTwoDecimalPlaces()
-                        )
-                        same = true
+                    if(initialTransaction.type == TransactionType.INCOME) {
+                        updatedAccounts[initialAccount.id] = updatedAccounts[initialAccount.id]?.let {
+                            it.copy(accAmount = it.accAmount - oldAmount)
+                        } ?: initialAccount.copy(accAmount = initialAccount.accAmount - oldAmount)
                     } else {
-                        account = account.copy(accAmount = (account.accAmount + newAmount).toTwoDecimalPlaces())
-                        initialAccount = initialAccount.copy(accAmount = (initialAccount.accAmount - oldAmount).toTwoDecimalPlaces())
+                        updatedAccounts[initialAccount.id] = updatedAccounts[initialAccount.id]?.let {
+                            it.copy(accAmount = it.accAmount + oldAmount)
+                        } ?: initialAccount.copy(accAmount = initialAccount.accAmount + oldAmount)
                     }
-
-                    updatedAccounts[account.id] = account
-                    if (!same) updatedAccounts[initialAccount.id] = initialAccount
+                    updatedAccounts[account.id] = updatedAccounts[account.id]?.let {
+                        it.copy(accAmount = it.accAmount + newAmount)
+                    } ?: account.copy(accAmount = account.accAmount + newAmount)
                 }
                 TransactionType.TRANSFER -> {
                     if (destinationAccount != null && initialDestination != null) {
