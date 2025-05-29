@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cashexpense.data.AppRepository
-import com.example.cashexpense.data.Transaction
 import com.example.cashexpense.ui.settings.CategoryDetails
 import com.example.cashexpense.ui.transaction.AccountDetails
 import com.example.cashexpense.ui.transaction.TransactionDetails

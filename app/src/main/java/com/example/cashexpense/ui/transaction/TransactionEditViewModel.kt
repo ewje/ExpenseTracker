@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
-import com.example.cashexpense.data.Transaction
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -113,13 +112,11 @@ class TransactionEditViewModel(
     private fun editAccountValue() {
         val accounts = accountsState.value
 
-        var account = accounts.find { it.accountName.trim() == transactionUiState.transactionDetails.account.trim() }
-        var destinationAccount = accounts.find{ it.accountName.trim() == transactionUiState.transactionDetails.destinationAccount.trim() }
+        val account = accounts.find { it.accountName.trim() == transactionUiState.transactionDetails.account.trim() }
+        val destinationAccount = accounts.find{ it.accountName.trim() == transactionUiState.transactionDetails.destinationAccount.trim() }
 
-        var initialAccount = accounts.find { it.accountName == initialTransaction.account }
-        var initialDestination = accounts.find { it.accountName == initialTransaction.destinationAccount }
-
-        var same: Boolean = false
+        val initialAccount = accounts.find { it.accountName == initialTransaction.account }
+        val initialDestination = accounts.find { it.accountName == initialTransaction.destinationAccount }
 
         val newAmount = transactionUiState.transactionDetails.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()
         val oldAmount = initialTransaction.amount.removeRange(0,1).toDoubleWithTwoDecimalPlaces()
@@ -193,7 +190,6 @@ class TransactionEditViewModel(
                     }
                 }
                 TransactionType.TRANSFERIN -> {
-                    same = true
                 }
             }
             viewModelScope.launch {

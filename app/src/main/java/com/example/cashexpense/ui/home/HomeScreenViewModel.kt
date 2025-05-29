@@ -99,3 +99,4 @@ fun getExpense(list: List<TransactionsWithAccountAndCategory>, account: Account?
     val newList = list.filter {it.account == account && it.transaction.type == TransactionType.EXPENSE}
     return newList.sumOf {it.transaction.transAmount}
 }
+

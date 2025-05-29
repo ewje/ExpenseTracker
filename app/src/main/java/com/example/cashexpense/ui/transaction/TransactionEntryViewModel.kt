@@ -59,12 +59,12 @@ class TransactionEntryViewModel(
     }
 
     private fun validateInput(uiState: TransactionDetails = transactionUiState.transactionDetails): Boolean {
-        if(uiState.type == TransactionType.TRANSFER){
-            return with(uiState) {
+        return if(uiState.type == TransactionType.TRANSFER){
+            with(uiState) {
                 amount.isNotBlank() && account.isNotBlank() && destinationAccount.isNotBlank()
             }
         } else {
-            return with(uiState) {
+            with(uiState) {
                 title.isNotBlank() && (amount.isNotBlank()) && account.isNotBlank() && category.isNotBlank()
             }
         }
@@ -89,13 +89,15 @@ class TransactionEntryViewModel(
                     )
                 }
                 TransactionType.TRANSFER -> {
-                    account = account.copy(
-                        accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
-                    )
-                    if(destinationAccount != null) {
-                        destinationAccount = destinationAccount.copy(
-                            accAmount = (destinationAccount.accAmount + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
+                    if(account != destinationAccount) {
+                        account = account.copy(
+                            accAmount = (account.accAmount - transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
                         )
+                        if(destinationAccount != null) {
+                            destinationAccount = destinationAccount.copy(
+                                accAmount = (destinationAccount.accAmount + transactionUiState.transactionDetails.amount.removeRange(0, 1).toDoubleWithTwoDecimalPlaces())
+                            )
+                        }
                     }
                 }
                 TransactionType.TRANSFERIN -> {

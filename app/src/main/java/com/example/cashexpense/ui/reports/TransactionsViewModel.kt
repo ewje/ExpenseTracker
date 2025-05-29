@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
 class TransactionsViewModel(
-    private val repository: AppRepository
+    repository: AppRepository
 ): ViewModel() {
 
     private val _transactionsState: StateFlow<List<TransactionsWithAccountAndCategory>> = repository.getTransactionsWithAccountAndCategory()

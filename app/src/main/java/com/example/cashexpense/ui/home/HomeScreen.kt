@@ -28,9 +28,9 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,11 +42,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -60,7 +57,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -69,7 +65,6 @@ import com.example.cashexpense.R
 import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.data.DayTransactions
-import com.example.cashexpense.data.Transaction
 import com.example.cashexpense.data.TransactionsWithAccountAndCategory
 import com.example.cashexpense.data.formatDate
 import com.example.cashexpense.data.groupByDay
@@ -119,7 +114,7 @@ private fun HomeBody(
     modifier: Modifier = Modifier,
     navigateToTransactionDetails: (Int, Int?) -> Unit
 ) {
-    var selectedAcc: Account? = accounts.firstOrNull()
+    val selectedAcc: Account? = accounts.firstOrNull()
     val sortedTransactions = transactions.groupByDay()
 /*
     LaunchedEffect(accounts) {
@@ -219,7 +214,7 @@ fun AccountCard(
     onClick: (Account) -> Unit
 ) {
     OutlinedCard(
-        modifier = modifier.height(75.dp).clip(RoundedCornerShape(12.dp)).clickable { onClick(account) },
+        modifier = modifier.height(65.dp).clip(RoundedCornerShape(20.dp)).clickable { onClick(account) },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.background//MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -230,12 +225,14 @@ fun AccountCard(
             } else {
                 Color(account.accountColor).copy(alpha = 0.3f)
             }
-        )
+        ),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Column(
             modifier = Modifier
-                .padding(dimensionResource(id = R.dimen.padding_small))
+                .padding(horizontal = dimensionResource(R.dimen.padding_medium), vertical = dimensionResource(R.dimen.padding_small))
                 .fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Row {
                 Text(
@@ -243,7 +240,7 @@ fun AccountCard(
                     style = MaterialTheme.typography.titleMedium
                 )
 
-                Spacer(Modifier.padding(dimensionResource(id = R.dimen.padding_medium)))
+                Spacer(Modifier.padding(dimensionResource(id = R.dimen.padding_small)))
 
                 RadioButton(
                     selected = (selectedAccount == account),
@@ -258,7 +255,7 @@ fun AccountCard(
             }
 
             Text(
-                text = account.accAmount.toString(),
+                text = "$${account.accAmount}",
                 style = MaterialTheme.typography.titleSmall
             )
         }
@@ -274,12 +271,13 @@ private fun AddAccount(
 ) {
     val openDialog = remember { mutableStateOf(false) }
     OutlinedCard(
-        modifier = modifier.height(75.dp).clickable { openDialog.value = true },
+        modifier = modifier.height(65.dp).clickable { openDialog.value = true },
            // .border(width = 4.dp, color = MaterialTheme.colorScheme.primaryContainer, shape = ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.background
         ),
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceVariant)
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.surfaceVariant),
+        shape = RoundedCornerShape(20.dp)
     ) {
         Row(
             modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)).fillMaxSize(),
@@ -320,18 +318,26 @@ private fun AddAccountDialog(
     val controller = rememberColorPickerController()
     val openDialog = remember { mutableStateOf(false) }
     Dialog(
-        onDismissRequest = { onDismissRequest() }
+        onDismissRequest = { onDismissRequest()
+            onAccountDetailsChange(accountDetails.copy(id = 0,
+                accountName = "",
+                color = 0xFFFFFFFF,
+                income = "",
+                expense = "",
+                amount = ""
+            ))}
     ) {
         Card(
-            modifier = Modifier
+            modifier = Modifier,
+            shape = RoundedCornerShape(28.dp)
         ) {
             Column(
-                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)).fillMaxWidth(),
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_large)).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
             ) {
                 Text(
                     text = "Add Account",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
                 HorizontalDivider(
@@ -366,7 +372,8 @@ private fun AddAccountDialog(
                             focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                             unfocusedIndicatorColor = MaterialTheme.colorScheme.primary
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp)
                         )
                 }
 
@@ -384,7 +391,8 @@ private fun AddAccountDialog(
                         keyboardType = KeyboardType.Number
                     ),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
                 )
 
                 TextButton(
@@ -408,7 +416,7 @@ private fun AddAccountDialog(
             saveColor = {
                 onAccountDetailsChange(accountDetails.copy(color = controller.selectedColor.value.toArgb().toLong()))
             },
-            initialColor = Color(0xFFFFFFFF)
+            initialColor = Color(accountDetails.color)
         )
     }
 }
@@ -424,20 +432,29 @@ fun EditAccount(
 ) {
     val controller = rememberColorPickerController()
     val openDialog = remember { mutableStateOf(false) }
+    val showDeleteDialog = remember { mutableStateOf(false)}
     //accountDetails = AccountDetails.copy(selectedAccount?.toAccountDetails() ?: AccountDetails())
     Dialog(
-        onDismissRequest = { onDismissRequest() }
+        onDismissRequest = { onDismissRequest()
+            onEditAccountDetailsChange(accountDetails.copy(id = 0,
+                accountName = "",
+                color = 0xFFFFFFFF,
+                income = "",
+                expense = "",
+                amount = ""
+            ))}
     ) {
         Card(
-            modifier = Modifier
+            modifier = Modifier,
+            shape = RoundedCornerShape(28.dp)
         ) {
             Column(
-                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)).fillMaxWidth(),
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_large)).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
             ) {
                 Text(
                     text = "Edit Account",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
                 HorizontalDivider(
@@ -472,7 +489,8 @@ fun EditAccount(
                             focusedIndicatorColor = MaterialTheme.colorScheme.primary,
                             unfocusedIndicatorColor = MaterialTheme.colorScheme.primary
                         ),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp)
                     )
                 }
 
@@ -490,17 +508,17 @@ fun EditAccount(
                         keyboardType = KeyboardType.Number
                     ),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp)
                 )
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     TextButton(
                         onClick = {
-                            onDismissRequest()
-                            deleteAccount(accountDetails.toAccount())
+                            showDeleteDialog.value = true
                         }
                     ) {
-                        Text("Delete")
+                        Text("Delete", color = Color.Red)
                     }
                     TextButton(
                         onClick = {
@@ -526,6 +544,16 @@ fun EditAccount(
             initialColor = Color(accountDetails.color)
         )
     }
+    DeleteConfirmationDialog(
+        title = "Delete Account",
+        message = "Are you sure you want to delete this Account?\nAll transactions under this account will be deleted as well.",
+        showDialog = showDeleteDialog.value,
+        onConfirm = {
+            deleteAccount(accountDetails.toAccount())
+            onDismissRequest()
+        },
+        onDismiss = { showDeleteDialog.value = false }
+    )
 }
 
 @Composable
@@ -539,15 +567,16 @@ private fun AmountCard(
     income: Double,
     expense: Double
 ) {
-        val openDialog = remember() { mutableStateOf(false) }
+        val openDialog = remember { mutableStateOf(false) }
         Card(
             modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable {
                 openDialog.value = true
                 onEditAccountDetailsChange(selectedAccount?.toAccountDetails() ?: AccountDetails())
             },
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.2f)//Color(selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.1f)
-            )
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)//Color(selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.1f)
+            ),
+            shape = RoundedCornerShape(20.dp)
         ) {
             Column(
                 modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_medium))
@@ -557,7 +586,7 @@ private fun AmountCard(
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = selectedAccount?.accountName ?: "Create an Account!",
+                            text = selectedAccount?.accountName ?: "Create an Account!\nAdd Categories in the Settings Screen!",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.fillMaxWidth(),
@@ -609,7 +638,9 @@ private fun AmountCard(
         if (openDialog.value) {
             EditAccount(
                 selectedAccount = selectedAccount,
-                onDismissRequest = { openDialog.value = false },
+                onDismissRequest = {
+                    openDialog.value = false
+                },
                 onEditAccountDetailsChange = onEditAccountDetailsChange,
                 editAccount = editAccount,
                 accountDetails = accountDetails,
@@ -712,14 +743,19 @@ fun TransactionItem(
                         text = "$${transaction.transaction.transAmount}",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge,
-                        color = if (transaction.transaction.type == TransactionType.EXPENSE) {
-                            colorResource(R.color.expense)
-                        } else if (transaction.transaction.type == TransactionType.INCOME){
-                            colorResource(R.color.income)
-                        } else if (transaction.transaction.type == TransactionType.TRANSFER) {
-                            colorResource(R.color.transferOut)
-                        } else {
-                            colorResource(R.color.transferIn)
+                        color = when (transaction.transaction.type) {
+                            TransactionType.EXPENSE -> {
+                                colorResource(R.color.expense)
+                            }
+                            TransactionType.INCOME -> {
+                                colorResource(R.color.income)
+                            }
+                            TransactionType.TRANSFER -> {
+                                colorResource(R.color.transferOut)
+                            }
+                            else -> {
+                                colorResource(R.color.transferIn)
+                            }
                         }
                     )
                 }
@@ -729,6 +765,42 @@ fun TransactionItem(
     Spacer(Modifier.padding(vertical = dimensionResource(R.dimen.padding_small)))
 }
 
+
+@Composable
+fun DeleteConfirmationDialog(
+    title: String = "Delete Item",
+    message: String = "Are you sure you want to delete this item?",
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    showDialog: Boolean
+) {
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { onDismiss() },
+            title = {
+                Text(text = title, fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Text(text = message)
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onConfirm()
+                        onDismiss()
+                    }
+                ) {
+                    Text("Delete", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onDismiss() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
 
 /*
 @Preview(showBackground = true)

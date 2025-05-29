@@ -1,9 +1,6 @@
 package com.example.cashexpense
 
-import android.graphics.Outline
-import android.graphics.drawable.shapes.Shape
 import android.os.Bundle
-import android.util.LayoutDirection
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,14 +28,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.PathOperation
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -64,7 +55,6 @@ import com.example.cashexpense.ui.transaction.TransactionEditDestination
 import com.example.cashexpense.ui.transaction.TransactionEditScreen
 import com.example.cashexpense.ui.transaction.TransactionEntryDestination
 import com.example.cashexpense.ui.transaction.TransactionEntryScreen
-import kotlin.io.path.Path
 
 
 class MainActivity : ComponentActivity() {
@@ -257,6 +247,7 @@ fun NavigationBar(
                         imageVector = if(currentRoute == ReportDestination.route) {
                             ReportDestination.selectedIcon
                         } else ReportDestination.unselectedIcon,
+                        //painterResource(id = R.drawable.insert_chart_24px),
                         contentDescription = ReportDestination.title
                     )
                 }
@@ -272,13 +263,11 @@ fun NavigationBar(
                     }
                 },
                 label = {
-                    Text(text = TransactionEntryDestination.navTitle)
+                    Text(text = TransactionsDestination.NAVTITLE)
                 },
                 icon = {
                     Icon(
-                        imageVector = if(currentRoute == TransactionEntryDestination.route) {
-                            TransactionEntryDestination.selectedIcon
-                        } else TransactionEntryDestination.unselectedIcon,
+                        painterResource(R.drawable.payments_24dp_e3e3e3_fill0_wght400_grad0_opsz24),
                         contentDescription = TransactionEntryDestination.title
                     )
                 }

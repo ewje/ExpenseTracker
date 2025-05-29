@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -48,6 +49,7 @@ import com.example.cashexpense.NavDestination
 import com.example.cashexpense.R
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.ui.AppViewModelProvider
+import com.example.cashexpense.ui.home.DeleteConfirmationDialog
 import com.example.cashexpense.ui.transaction.toCategoryDetails
 import com.github.skydoves.colorpicker.compose.AlphaTile
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
@@ -99,7 +101,11 @@ private fun CategoriesBody(
             isButtonEnabled = isButtonEnabled
         )
         Card(
-            modifier = Modifier
+            modifier = Modifier,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)//Color(selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.1f)
+            ),
+            shape = RoundedCornerShape(20.dp)
         ) {
             LazyColumn {
                 items(categories) {category ->
@@ -131,7 +137,13 @@ private fun CategoryAdd(
 ) {
     val controller = rememberColorPickerController()
     val openDialog = remember { mutableStateOf(false) }
-    Card(modifier = modifier.fillMaxWidth()) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        ),
+        shape = RoundedCornerShape(20.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.padding_medium)),
             verticalAlignment = Alignment.CenterVertically,
@@ -160,7 +172,9 @@ private fun CategoryAdd(
                 label = { Text("Add Category") },
                 colors = TextFieldDefaults.colors(
                     unfocusedIndicatorColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent
+                    focusedIndicatorColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
                 ),
                 modifier = Modifier.weight(1f)
             )
@@ -197,10 +211,10 @@ fun ColorPicker(
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Card(
             modifier = Modifier,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(28.dp)
         ) {
             Column(
-                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_large)),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
             ) {
@@ -267,6 +281,7 @@ private fun CategoryRow(
     onDelete: () -> Unit,
     isLast: Boolean = false
 ) {
+    val showDeleteDialog = remember { mutableStateOf(false)}
     Column(
         modifier = Modifier.clickable { onClick(category.toCategoryDetails()) }
     ) {
@@ -302,7 +317,7 @@ private fun CategoryRow(
             Icon(
                 Icons.Outlined.Delete,
                 contentDescription = "",
-                modifier = Modifier.clickable { onDelete() }
+                modifier = Modifier.clickable { showDeleteDialog.value = true }
                 //tint = Color.Gray
             )
 
@@ -315,6 +330,13 @@ private fun CategoryRow(
             )
         }
     }
+    DeleteConfirmationDialog(
+        title = "Delete Category",
+        message = "Are you sure you want to delete this category?\nAll transactions under this category will be deleted as well",
+        showDialog = showDeleteDialog.value,
+        onConfirm = onDelete,
+        onDismiss = { showDeleteDialog.value = false }
+    )
 }
 
 @Preview(showBackground = true)

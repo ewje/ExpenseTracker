@@ -1,8 +1,5 @@
 package com.example.cashexpense.ui.reports
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,14 +14,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -55,9 +50,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.SubcomposeLayout
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
@@ -152,7 +144,7 @@ fun ReportsBody(
         } else {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+                    containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.3f)
                 )
             ){
                 Text(
@@ -169,22 +161,20 @@ fun ReportsBody(
                 categories = category,
                 selectedCategory = uiState.selectedCategory,
                 onSliceClick = viewModel::updateSelectedCategory,
-                viewModel,
-                uiState = uiState
+                viewModel
             )
             MonthlyBarChart(
                 selectedYearMonth = uiState.selectedYearMonth,
                 listData = transactions.groupByMonth(),
                 onClick = viewModel::updateSelectedMonth,
-                categories = category,
                 navigateToTransactionDetails =navigateToTransactionDetails,
-                uiState = uiState
+                categories = category
             )
             Spacer(Modifier.height(dimensionResource(R.dimen.padding_medium)))
         } else {
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)//Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
                 )
             ){
                 Text(
@@ -204,8 +194,7 @@ fun CategoryPieChart(
     categories: List<Category>,
     selectedCategory: Category?,
     onSliceClick: (Category?) -> Unit,
-    viewModel: ReportScreenViewModel,
-    uiState: ReportsUiState
+    viewModel: ReportScreenViewModel
 ) {
     val expenseByCategory: Map<Category, List<TransactionsWithAccountAndCategory>> = transactionsByType[TransactionType.EXPENSE]?.groupBy { it.category } ?: emptyMap()
     val incomeByCategory: Map<Category, List<TransactionsWithAccountAndCategory>> = transactionsByType[TransactionType.INCOME]?.groupBy { it.category } ?: emptyMap()
@@ -220,8 +209,9 @@ fun CategoryPieChart(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)//Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+        ),
+        shape = RoundedCornerShape(20.dp)
     ) {
         HorizontalPager(pagerState) {
             when(it) {
@@ -426,14 +416,14 @@ fun MonthlyBarChart(
     listData: Map<YearMonth, MonthTransactions>,
     onClick: (YearMonth) -> Unit,
     navigateToTransactionDetails: (Int, Int) -> Unit,
-    categories: List<Category>,
-    uiState: ReportsUiState
+    categories: List<Category>
 ) {
     Card(
         modifier = Modifier,
         colors = CardDefaults.cardColors(
-            containerColor = Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)//Color(uiState.selectedAccount?.accountColor?:MaterialTheme.colorScheme.surfaceVariant.toArgb().toLong()).copy(alpha = 0.05f)
+        ),
+        shape = RoundedCornerShape(20.dp)
     )  {
         Column(
             modifier = Modifier.padding(
@@ -478,7 +468,7 @@ fun BarItem(barData: MonthTransactions, isSelected: Boolean, maxValue: Double, o
     ) {
         Box(
             modifier = Modifier
-                .background(color = if (isSelected) Color.Gray.copy(alpha = 0.5f) else Color.Transparent, shape = RoundedCornerShape(4.dp))
+                .background(color = if (isSelected) Color.Gray.copy(alpha = 0.2f) else Color.Transparent, shape = RoundedCornerShape(4.dp))
                 .padding(4.dp)
         ) {
             Row (verticalAlignment = Alignment.Bottom) {
