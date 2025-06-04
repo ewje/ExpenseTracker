@@ -98,7 +98,7 @@ private fun SettingsBody(
 private fun SettingsRow(
     text: String,
     onClick: () -> Unit,
-    color: Color = Color.Black,
+    color: Color = MaterialTheme.colorScheme.onBackground,
     isLast: Boolean = false,
     hasArrow: Boolean = false
 ) {

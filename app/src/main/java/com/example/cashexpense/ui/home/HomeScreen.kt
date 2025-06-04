@@ -662,7 +662,7 @@ fun TransactionItem(
         Text(
             text = date.formatDate(),
             style = MaterialTheme.typography.bodySmall,
-            color = Color.DarkGray
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
         )
         HorizontalDivider(
             thickness = 1.dp,
@@ -702,6 +702,7 @@ fun TransactionItem(
                         modifier = Modifier
                             .padding(4.dp)
                             .background(
+                                //width = 1.dp,
                                 color = Color(categories.find {
                                     transaction.transaction.categoryIdFk == it.id
                                 }?.color ?: MaterialTheme.colorScheme.background.toArgb().toLong()),

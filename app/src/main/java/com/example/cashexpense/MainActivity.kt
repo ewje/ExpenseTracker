@@ -299,7 +299,9 @@ fun NavigationBar(
                 }
             },
             shape = CircleShape,
-            modifier = Modifier.offset(y = (-8).dp).align(Alignment.BottomCenter).padding(bottom = 56.dp)
+            modifier = Modifier
+                .offset(y = (-8).dp)
+                .align(Alignment.TopCenter)
         ) {
             Icon(
                 imageVector = Icons.Filled.Add,

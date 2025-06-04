@@ -20,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -75,8 +74,8 @@ private fun TransactionsBody(
     if(transactionsByMonth.isNotEmpty()) {
         val listOfYearMonth =
             generateMonthRange(
-                transactionsByMonth.keys.min().minusYears(2),
-                transactionsByMonth.keys.max().plusYears(2)
+                transactionsByMonth.keys.min().minusYears(1),
+                transactionsByMonth.keys.max().plusYears(1)
             )
         val fullMonthMap: Map<YearMonth, MonthTransactions> = listOfYearMonth.associateWith { month ->
             transactionsByMonth[month] ?: MonthTransactions(yearMonth = month, income = 0.0, expense = 0.0, transactions = mutableListOf())
@@ -93,7 +92,7 @@ private fun TransactionsBody(
             ScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
                 modifier = Modifier.fillMaxWidth(),
-                contentColor = Color.Black
+                contentColor = MaterialTheme.colorScheme.onBackground
             ) {
                 listOfYearMonth.forEachIndexed { index, month ->
                     val selected = pagerState.currentPage == index
@@ -106,8 +105,9 @@ private fun TransactionsBody(
                             ) {
                                 Text(
                                     text = month.format(DateTimeFormatter.ofPattern("MMMM")),
-                                    color = if(selected) Color.Black else Color.LightGray,
+                                    color = if(selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
                                     style = MaterialTheme.typography.bodySmall.merge(TextStyle(lineHeight = 8.sp)),
+                                    fontSize = if(month == YearMonth.now()) 16.sp else 12.sp,
                                     modifier = Modifier.padding(bottom = 0.dp),
                                     fontWeight = if(month == YearMonth.now()) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -115,7 +115,7 @@ private fun TransactionsBody(
                                     Text(
                                         text = month.format(DateTimeFormatter.ofPattern("yyyy")),
                                         fontSize = 8.sp,
-                                        color = if(selected) Color.Black else Color.LightGray,
+                                        color = if(selected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
                                         style = TextStyle(lineHeight = 2.sp)
                                     )
                                 }

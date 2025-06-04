@@ -226,7 +226,7 @@ fun CategoryPieChart(
             horizontalArrangement = Arrangement.Center
         ) {
             repeat(2) { iteration ->
-                val color = if (pagerState.currentPage == iteration) Color.Gray else Color.LightGray
+                val color = if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onBackground.copy(0.2f)
                 Box(
                     modifier = Modifier
                         .padding(8.dp)
