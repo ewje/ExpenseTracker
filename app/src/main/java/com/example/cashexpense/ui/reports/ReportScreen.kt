@@ -1,5 +1,6 @@
 package com.example.cashexpense.ui.reports
 
+import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,6 +49,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.colorResource
@@ -330,7 +332,7 @@ private fun PieChart(
     selectedCategory: Category?,
     type: String
 ) {
-
+    val backgroundColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
     // Make sure expenses are updated when originalExpenses change
     var expenses by remember { mutableStateOf(originalExpenses) }
 
@@ -344,11 +346,11 @@ private fun PieChart(
         contentAlignment = Alignment.Center, modifier = Modifier.padding(end = dimensionResource(R.dimen.padding_small))
             .size(200.dp)
     ) {
-        val gapAngle = if(expenses.size > 1) {
+        /*val gapAngle = if(expenses.size > 1) {
             12f
         } else {
             0f
-        }
+        } */
         Canvas(
             modifier = Modifier.fillMaxSize().padding(dimensionResource(R.dimen.padding_small))
                 .pointerInput(expenses, sweepAngles) {
@@ -366,12 +368,10 @@ private fun PieChart(
                         if (distance <= min(size.width+50, size.height+50) / 2 && distance >= min(size.width - 130, size.height - 130) / 2
                         ) {
                             var start = -90f
-                            println(touchAngle)
                             sweepAngles.forEachIndexed { index, sweep ->
-                                val sweepWithoutGap =
-                                    sweep - gapAngle // Match the gap used in drawing
-                                val end = start + sweepWithoutGap
-
+                                //val sweepWithoutGap =
+                                    //sweep - gapAngle // Match the gap used in drawing
+                                val end = start + sweep
                                 if (touchAngle in start..end) {
                                     onSliceClick(expenses[index])
                                     return@detectTapGestures
@@ -379,22 +379,23 @@ private fun PieChart(
                                 start += sweep
                             }
                         }
+
                     }
                 }
         ) {
-
+            println(sweepAngles)
             expenses.forEachIndexed { index, expense ->
                 drawArc(
                     color = Color(expense.color),
                     startAngle = startAngle,
-                    sweepAngle = sweepAngles[index] - gapAngle,
+                    sweepAngle = sweepAngles[index], // - gapAngle,
                     useCenter = false,
                     style = Stroke(
                         width = if (expense.name == selectedCategory?.categoryName) 24.dp.toPx() else 14.dp.toPx(),
-                        cap = StrokeCap.Round
+                        //cap = StrokeCap.Round
                     ),
-                    size = Size(size.width, size.height),
-                    topLeft = Offset(0f, 0f)
+                    size = Size(size.width - 30, size.height - 30),
+                    topLeft = Offset(15f, 15f)
                 )
                 startAngle += sweepAngles[index]
             }

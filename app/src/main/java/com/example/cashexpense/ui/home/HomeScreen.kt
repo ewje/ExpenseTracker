@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -524,6 +525,13 @@ fun EditAccount(
                         onClick = {
                             onDismissRequest()
                             editAccount(accountDetails.toAccount())
+                            onEditAccountDetailsChange(accountDetails.copy(id = 0,
+                                accountName = "",
+                                color = 0xFFFFFFFF,
+                                income = "",
+                                expense = "",
+                                amount = ""
+                            ))
                         }
                     ) {
                         Text( "Confirm" )
@@ -698,14 +706,15 @@ fun TransactionItem(
                         verticalAlignment = Alignment.CenterVertically,
 
                         ) {
+                        val catColor = Color(categories.find {
+                            transaction.transaction.categoryIdFk == it.id
+                        }?.color ?: MaterialTheme.colorScheme.background.toArgb().toLong())
                         Box(
                             modifier = Modifier
                                 .padding(4.dp)
                                 .background(
                                     //width = 1.dp,
-                                    color = Color(categories.find {
-                                        transaction.transaction.categoryIdFk == it.id
-                                    }?.color ?: MaterialTheme.colorScheme.background.toArgb().toLong()),
+                                    color = catColor,
                                     shape = RoundedCornerShape(25.dp)
                                 )
                                 .padding(start = 4.dp, end = 4.dp, top = 1.dp)
@@ -713,6 +722,7 @@ fun TransactionItem(
                             Text(
                                 text = categories.find { transaction.transaction.categoryIdFk == it.id }?.categoryName ?: "",
                                 style = MaterialTheme.typography.bodySmall,
+                                color = if (catColor.luminance() > 0.5f) Color.Black else Color.White
                             )
                         }
                         Box(

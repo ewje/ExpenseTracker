@@ -11,6 +11,8 @@ import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -38,14 +40,20 @@ class TransactionEditViewModel(
 
     val transactionId2 = savedStateHandle.get<Int>(TransactionEditDestination.transactionId2)?.takeIf { it != -1 }
 
+
+    var isInitialized by mutableStateOf(false)
+        private set
+
     //val initialTransaction: TransactionDetails = repository.getTransactionStream(transactionId).filterNotNull().first().toTransactionDetails()
 
     init {
         viewModelScope.launch {
+            val accounts = accountsState.filter { it.isNotEmpty() }.first()
+            val categories = categoriesState.filter { it.isNotEmpty() }.first()
             var transaction = repository.getTransactionStream(transactionId1).filterNotNull().first().toTransactionDetails()
             transaction = transaction.copy(
-                account = accountsState.value.find { it.id == transaction.accountId }?.accountName ?: "",
-                category = categoriesState.value.find { it.id == transaction.categoryId }?.categoryName ?: "",
+                account = accounts.find { it.id == transaction.accountId }?.accountName ?: "",
+                category = categories.find { it.id == transaction.categoryId }?.categoryName ?: "",
                 amount = "$${transaction.amount}")
             transactionUiState = TransactionUiState(transaction)
             initialTransaction = transaction
@@ -53,8 +61,8 @@ class TransactionEditViewModel(
             if(transactionId2 != null) {
                 transferInTransaction = repository.getTransactionStream(transactionId2).filterNotNull().first().toTransactionDetails()
                 transferInTransaction = transferInTransaction.copy(
-                    account = accountsState.value.find { it.id == transferInTransaction.accountId }?.accountName ?: "",
-                    category = categoriesState.value.find { it.id == transaction.categoryId }?.categoryName ?: "",
+                    account = accounts.find { it.id == transferInTransaction.accountId }?.accountName ?: "",
+                    category = categories.find { it.id == transaction.categoryId }?.categoryName ?: "",
                     amount = "$${transaction.amount}"
                 )
                 transactionUiState = transactionUiState.copy(transactionDetails = transactionUiState.transactionDetails.copy(destinationAccount = transferInTransaction.account))
@@ -62,8 +70,10 @@ class TransactionEditViewModel(
             } else {
                 transferInTransaction = TransactionDetails()
             }
+            isInitialized = true
         }
     }
+
 
     private fun validateInput(uiState: TransactionDetails = transactionUiState.transactionDetails): Boolean {
         //return with(uiState) {
