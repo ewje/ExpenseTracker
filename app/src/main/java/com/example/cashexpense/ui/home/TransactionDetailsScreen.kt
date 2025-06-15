@@ -170,7 +170,7 @@ fun TransactionDetailsCard(
                         )
                         Text(
                             text = transactionDetails.title,
-                            style = MaterialTheme.typography.displayMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.fillMaxWidth(),
                             maxLines = Int.MAX_VALUE,

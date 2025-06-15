@@ -9,6 +9,7 @@ import com.example.cashexpense.data.Account
 import com.example.cashexpense.data.AppRepository
 import com.example.cashexpense.data.Category
 import com.example.cashexpense.data.Transaction
+import com.example.cashexpense.ui.home.formatNumber
 import com.example.cashexpense.ui.settings.CategoryDetails
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -159,7 +160,7 @@ enum class TransactionType(val label: String) {
 fun Transaction.toTransactionDetails(): TransactionDetails = TransactionDetails(
     id = id,
     title = title,
-    amount = transAmount.toString(),
+    amount = formatNumber(transAmount),
     date = date,
     details = details,
     type = type,
@@ -171,7 +172,7 @@ fun Account.toAccountDetails(): AccountDetails = AccountDetails(
     id = id,
     accountName = accountName,
     color = accountColor,
-    amount = accAmount.toString(),
+    amount = formatNumber(accAmount),
     expense = expense.toString(),
     income = income.toString()
 )

@@ -2,6 +2,8 @@ package com.example.cashexpense.ui.reports
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -9,7 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
@@ -20,6 +28,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +46,7 @@ import com.example.cashexpense.data.groupByDay
 import com.example.cashexpense.data.groupByMonth
 import com.example.cashexpense.ui.AppViewModelProvider
 import com.example.cashexpense.ui.home.TransactionItem
+import com.example.cashexpense.ui.home.formatNumber
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -128,6 +139,8 @@ private fun TransactionsBody(
 
 
 
+
+
             // Horizontal pager
             HorizontalPager(
                 state = pagerState,
@@ -167,6 +180,11 @@ private fun TransactionsBody(
                             modifier = Modifier
                                 .padding(16.dp)
                         )
+                        IncomeExpense(
+                            income = fullMonthMap[listOfYearMonth[page]]?.income ?: 0.0,
+                            expense = fullMonthMap[listOfYearMonth[page]]?.expense ?: 0.0
+                        )
+                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
                         dateList.forEach { date ->
                             TransactionItem(
                                 transactions = sortedTransactions[date]!!,
@@ -193,6 +211,55 @@ private fun TransactionsBody(
         }
     }
 
+}
+
+@Composable
+fun IncomeExpense(
+    income: Double,
+    expense: Double
+){
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            //horizontalArrangement = Arrangement.SpaceEvenly
+        ){
+            Row(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = "",
+                    tint = colorResource(R.color.income),
+                    modifier = Modifier.graphicsLayer { scaleY = -1f }
+                )
+                Text(
+                    text = "$${formatNumber(income)}",
+                    color = colorResource(R.color.income)
+                )
+            }
+            Row(
+                modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 4.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = "",
+                    tint = colorResource(R.color.expense)
+                )
+                Text(
+                    text = "$${formatNumber(expense)}",
+                    color = colorResource(R.color.expense)
+                )
+            }
+        }
+    }
 }
 
 fun generateMonthRange(from: YearMonth, to: YearMonth): List<YearMonth> {

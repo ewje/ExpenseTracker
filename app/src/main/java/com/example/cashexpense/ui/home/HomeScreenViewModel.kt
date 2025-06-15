@@ -100,3 +100,10 @@ fun getExpense(list: List<TransactionsWithAccountAndCategory>, account: Account?
     return newList.sumOf {it.transaction.transAmount}
 }
 
+fun formatNumber(value: Double): String {
+    return if (value % 1.0 == 0.0) {
+        "%.0f".format(value)
+    } else {
+        "%.2f".format(value)
+    }
+}

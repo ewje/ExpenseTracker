@@ -70,6 +70,7 @@ import com.example.cashexpense.data.groupByMonth
 import com.example.cashexpense.ui.AppViewModelProvider
 import com.example.cashexpense.ui.home.AccountCard
 import com.example.cashexpense.ui.home.TransactionItem
+import com.example.cashexpense.ui.home.formatNumber
 import com.example.cashexpense.ui.transaction.TransactionType
 import kotlinx.coroutines.launch
 import java.time.YearMonth
@@ -291,7 +292,7 @@ private fun PieChartCard(
                     val total = pieData.sumOf { it.amount }
                     val percent: Int = if (total != 0.0) ((amount / total) * 100.0).roundToInt() else 0
                     Text(
-                        text = "$${amount}",
+                        text = "$${formatNumber(amount)}",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -401,7 +402,7 @@ private fun PieChart(
         Column {
             Text(text = type)
             Text(
-                text = "$${totalExpense}",
+                text = "$${formatNumber(totalExpense)}",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -442,6 +443,11 @@ fun MonthlyBarChart(
             Column {
                 val sortedTransactions = listData[selectedYearMonth]?.transactions?.groupByDay() ?: emptyMap()
                 val dateList = ArrayList(sortedTransactions.keys)
+                IncomeExpense(
+                    income = listData[selectedYearMonth]?.income ?: 0.0,
+                    expense = listData[selectedYearMonth]?.expense ?: 0.0
+                )
+                Spacer(Modifier.height(dimensionResource(R.dimen.padding_medium)))
                 dateList.forEach { date ->
                     TransactionItem(
                         transactions = sortedTransactions[date]!!,
@@ -499,7 +505,7 @@ fun BarChart(selectedYearMonth: YearMonth, listData: Map<YearMonth, MonthTransac
     val scrollState = rememberScrollState()
     //val maxValue = (listData.maxOfOrNull { maxOf(it.value.income, it.value.expense) } ?: 1.0 ).toInt()
     val rawMax = listData.maxOfOrNull { maxOf(it.value.income, it.value.expense) } ?: 1.0
-    val maxValue = (rawMax * 1.1).roundToInt().coerceAtLeast(1)
+    val maxValue = (rawMax).roundToInt().coerceAtLeast(1)
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(listData.size) {
         coroutineScope.launch {
@@ -507,14 +513,21 @@ fun BarChart(selectedYearMonth: YearMonth, listData: Map<YearMonth, MonthTransac
         }
     }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-        Column(modifier = Modifier.padding(bottom = 22.dp).height(200.dp), verticalArrangement = Arrangement.SpaceBetween) {
+        Column(modifier = Modifier.padding(bottom = 20.dp).height(200.dp), verticalArrangement = Arrangement.SpaceBetween) {
             //(0..(maxValue) step (maxValue) / 4).reversed().forEach {
-            val step = (maxValue / 4.0).roundToInt().coerceAtLeast(1)
-            val labels = (step * 4 downTo 0 step step).toMutableList()
-            if (!labels.contains(0)) labels.add(0) // Make sure 0 is included
+            val step = (maxValue / 4.0).coerceAtLeast(1.0)
+            //val labels = (step * 4 downTo 0 step step).toMutableList()
+            val labels = mutableListOf<Double>()
+
+            var value = step * 4
+            while (value >= 0) {
+                labels.add(value)
+                value -= step
+            }
+            if (!labels.contains(0.0)) labels.add(0.0) // Make sure 0 is included
             labels.sortedDescending().forEach {
                 Text(
-                    text = "$it",
+                    text = "${it.roundToInt()}",
                     color = Color.Gray,
                     fontSize = 12.sp,
                     //modifier = Modifier.padding(bottom = 32.dp)

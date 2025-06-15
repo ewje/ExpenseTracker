@@ -255,7 +255,7 @@ fun AccountCard(
             }
 
             Text(
-                text = "$${account.accAmount}",
+                text = "$${formatNumber(account.accAmount)}",
                 style = MaterialTheme.typography.titleSmall
             )
         }
@@ -596,7 +596,7 @@ private fun AmountCard(
                     }
                     Box(modifier = Modifier.wrapContentWidth(), contentAlignment = Alignment.TopEnd) {
                         Text(
-                            text = "$${selectedAccount?.accAmount ?: 0.0}",
+                            text = "$${formatNumber(selectedAccount?.accAmount ?: 0.0)}",
                             style = MaterialTheme.typography.displayLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -615,7 +615,7 @@ private fun AmountCard(
                             color = colorResource(R.color.income)
                         )
                         Text(
-                            text = "$${income}",
+                            text = "$${formatNumber(income)}",
                             style = MaterialTheme.typography.titleLarge,
                             color = colorResource(R.color.income)
                         )
@@ -627,7 +627,7 @@ private fun AmountCard(
                             color = colorResource(R.color.expense)
                         )
                         Text(
-                            text = "$${expense}",//selectedAccount?.expense ?: 0.0}",
+                            text = "$${formatNumber(expense)}",//selectedAccount?.expense ?: 0.0}",
                             style = MaterialTheme.typography.titleLarge,
                             color = colorResource(R.color.expense)
                         )
@@ -692,73 +692,77 @@ fun TransactionItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ){
+                Box(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier,
+                        verticalAlignment = Alignment.CenterVertically,
 
-                Row(
-                    modifier = Modifier,
-                    verticalAlignment = Alignment.CenterVertically,
-
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .background(
-                                //width = 1.dp,
-                                color = Color(categories.find {
-                                    transaction.transaction.categoryIdFk == it.id
-                                }?.color ?: MaterialTheme.colorScheme.background.toArgb().toLong()),
-                                shape = RoundedCornerShape(25.dp)
+                        ) {
+                        Box(
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .background(
+                                    //width = 1.dp,
+                                    color = Color(categories.find {
+                                        transaction.transaction.categoryIdFk == it.id
+                                    }?.color ?: MaterialTheme.colorScheme.background.toArgb().toLong()),
+                                    shape = RoundedCornerShape(25.dp)
+                                )
+                                .padding(start = 4.dp, end = 4.dp, top = 1.dp)
+                        ) {
+                            Text(
+                                text = categories.find { transaction.transaction.categoryIdFk == it.id }?.categoryName ?: "",
+                                style = MaterialTheme.typography.bodySmall,
                             )
-                            .padding(start = 4.dp, end = 4.dp, top = 1.dp)
-                    ) {
-                        Text(
-                            text = categories.find { transaction.transaction.categoryIdFk == it.id }?.categoryName ?: "",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                    Box(
-                        modifier = Modifier.padding(2.dp)
-                    ) {
-                        Text(
-                            text = transaction.transaction.title
-                        )
+                        }
+                        Box(
+                            modifier = Modifier.padding(2.dp)
+                        ) {
+                            Text(
+                                text = transaction.transaction.title,
+                                overflow = TextOverflow.Clip
+                            )
+                        }
                     }
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (transaction.transaction.type == TransactionType.EXPENSE) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowDropDown,
-                            contentDescription = "",
-                            tint = colorResource(R.color.expense)
-                        )
-                    } else if (transaction.transaction.type == TransactionType.INCOME) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowDropDown,
-                            contentDescription = "",
-                            tint = colorResource(R.color.income),
-                            modifier = Modifier.graphicsLayer { scaleY = -1f }
+                Box(modifier = Modifier.wrapContentWidth(), contentAlignment = Alignment.TopEnd) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (transaction.transaction.type == TransactionType.EXPENSE) {
+                            Icon(
+                                imageVector = Icons.Filled.ArrowDropDown,
+                                contentDescription = "",
+                                tint = colorResource(R.color.expense)
+                            )
+                        } else if (transaction.transaction.type == TransactionType.INCOME) {
+                            Icon(
+                                imageVector = Icons.Filled.ArrowDropDown,
+                                contentDescription = "",
+                                tint = colorResource(R.color.income),
+                                modifier = Modifier.graphicsLayer { scaleY = -1f }
+                            )
+                        }
+                        Text(
+                            text = "$${formatNumber(transaction.transaction.transAmount)}",
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = when (transaction.transaction.type) {
+                                TransactionType.EXPENSE -> {
+                                    colorResource(R.color.expense)
+                                }
+                                TransactionType.INCOME -> {
+                                    colorResource(R.color.income)
+                                }
+                                TransactionType.TRANSFER -> {
+                                    colorResource(R.color.transferOut)
+                                }
+                                else -> {
+                                    colorResource(R.color.transferIn)
+                                }
+                            }
                         )
                     }
-                    Text(
-                        text = "$${transaction.transaction.transAmount}",
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = when (transaction.transaction.type) {
-                            TransactionType.EXPENSE -> {
-                                colorResource(R.color.expense)
-                            }
-                            TransactionType.INCOME -> {
-                                colorResource(R.color.income)
-                            }
-                            TransactionType.TRANSFER -> {
-                                colorResource(R.color.transferOut)
-                            }
-                            else -> {
-                                colorResource(R.color.transferIn)
-                            }
-                        }
-                    )
                 }
             }
         }
